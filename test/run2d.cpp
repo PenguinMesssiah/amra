@@ -1,5 +1,5 @@
 // project includes
-#include <amra/grid2d.hpp>
+#include <amra/grid2d_time.hpp>
 
 // system includes
 
@@ -8,9 +8,14 @@
 
 using namespace AMRA;
 
+/*
+ *@param argv[1] mapfile name/path
+ *@param argv[2] global constraint for A* Search  
+*/
 int main(int argc, char** argv)
 {
 	std::string mapfile(argv[1]);
+	int budget = std::stoi(argv[2]);
 
 	// // run 2D gridworld planning for fixed starts and goals
 	// std::vector<std::vector<int> > starts, goals;
@@ -29,8 +34,8 @@ int main(int argc, char** argv)
 	// run 2D gridworld planning for random starts and goals
 	for (int i = 0; i < 1; ++i)
 	{
-		Grid2D grid(mapfile);
-		grid.CreateSearch();
+		Grid2D_Time grid(mapfile, budget);
+		grid.CreateAStarSearch();
 		grid.Plan(true);
 	}
 }

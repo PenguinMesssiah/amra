@@ -25,6 +25,7 @@ include_directories(include)
 add_library(
     AMRA
     src/amra/grid2d.cpp
+    src/amra/grid2d_time.cpp
     src/amra/griduav.cpp
     src/amra/heuristic.cpp
     src/amra/dubins.cpp

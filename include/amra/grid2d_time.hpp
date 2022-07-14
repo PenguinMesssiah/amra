@@ -6,6 +6,7 @@
 
 // system includes
 #include <smpl/types.h>
+#include <time.h>
 
 // standard includes
 #include <memory>
@@ -20,8 +21,7 @@ struct hash<AMRA::MapState>
 	result_type operator()(const argument_type& s) const;
 };
 
-}
- // namespace std
+} // namespace std
 
 namespace AMRA
 {
@@ -31,7 +31,7 @@ class Heuristic;
 class Grid2D_Time : public Environment
 {
 public:
-	Grid2D_Time(const std::string& mapname);
+	Grid2D_Time(const std::string& mapname, const int budget);
 
 	void SetStart(const int& d1, const int& d2);
 	void SetGoal(const int& d1, const int& d2);
@@ -42,12 +42,12 @@ public:
 
 	void GetSuccs(
 		int state_id,
-		//Resolution::Level level,
+		Resolution::Level level,
 		std::vector<int>* succs,
 		std::vector<unsigned int>* costs,
 		std::vector<int>* action_ids) override;
 	bool IsGoal(const int& id) override;
-
+	
 	void SaveExpansions(
 		int iter, double w1, double w2,
 		const std::vector<int>& curr_solution,
@@ -68,10 +68,10 @@ private:
 	//int m_heur_count, m_res_count;
 	//Resolution::Level m_default_res;
 
-	int m_s1, m_s2, m_g1, m_g2;
+	int m_s1, m_s2, m_g1, m_g2, m_budget;
 	bool m_start_set, m_goal_set;
 	std::vector<MapState*> m_states;
-	std::vector<MapState*> m_closed;
+	EXPANDS_t m_closed;
 
 	// maps from coords to stateID
 	typedef MapState StateKey;
@@ -83,19 +83,20 @@ private:
 	int getHashEntry(
 		const int& d1,
 		const int& d2,
-		const std::time_t time);
+		int time);
 	int reserveHashEntry();
 	int createHashEntry(
 		const int& d1,
 		const int& d2,
-		const std::time_t time);
+		int time);
 	int getOrCreateState(
 		const int& d1,
-		const int& d2);
+		const int& d2,
+		int time);
 
 	int generateSuccessor(
 		const MapState* parent,
-		int a1, int a2, int grid_res,
+		int a1, int a2,
 		std::vector<int>* succs,
 		std::vector<unsigned int>* costs);
 	unsigned int cost(

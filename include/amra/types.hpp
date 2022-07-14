@@ -32,7 +32,6 @@ struct MapState
 {
 	DiscState coord;
 	ContState state;
-	std::time_t time;
 	Resolution::Level level;
 };
 typedef std::map<int, std::vector<MapState*> > EXPANDS_t;
