@@ -26,13 +26,15 @@ auto std::hash<AMRA::MapState>::operator()(
 namespace AMRA
 {
 
-Grid2D_Time::Grid2D_Time(const std::string& mapname)
+Grid2D_Time::Grid2D_Time(const std::string& mapname, const int budget)
 :
 m_mapname(mapname),
 m_start_set(false),
-m_goal_set(false)
+m_goal_set(false),
+m_budget(0)
 {
-	m_map = std::make_unique<MovingAI>(mapname);
+	m_map    = std::make_unique<MovingAI>(mapname);
+	m_budget = budget;
 
 	// reset everything
 	for (MapState* s : m_states) {
@@ -46,6 +48,7 @@ m_goal_set(false)
 
 void Grid2D_Time::CreateSearch()
 {
+	/*
 	if (GRID == 4) {
 		m_heurs.emplace_back(new ManhattanDist(this));
 	}
@@ -55,7 +58,6 @@ void Grid2D_Time::CreateSearch()
 	else {
 		throw std::runtime_error("Invalid 2D grid. Must be 4- or 8-connected!");
 	}
-	/*
 	m_heurs_map.emplace_back(Resolution::ANCHOR, 0); // anchor always goes first
 	m_heurs_map.emplace_back(Resolution::HIGH, 0);
 	m_res_count = 1; // inadmissible resolution count
@@ -88,27 +90,28 @@ void Grid2D_Time::CreateSearch()
 	for (int i = 0; i < m_heurs_map.size(); ++i) {
 		m_closed[i].clear(); // init expansions container
 	}
-	*/
 
 	m_search = std::make_unique<AMRAStar>(
 		this, m_heurs, m_heurs_map,
 		m_heur_count, m_res_count);
 	m_search->reset();
+	*/
 }
 
-void Grid2D_Time::CreateARAStarSearch()
+void Grid2D_Time::CreateAStarSearch()
 {
 	// m_heurs.emplace_back(new EuclideanDist(this));
 	m_heurs.emplace_back(new ManhattanDist(this));
 	m_search = std::make_unique<ARAStar>(this, m_heurs.at(0));
+	printf("Restarting Search\n");
 	m_search->reset();
-	m_default_res = Resolution::HIGH;
+	//m_default_res = Resolution::HIGH;
 }
 
 void Grid2D_Time::SetStart(const int& d1, const int& d2)
 {
 	assert(!m_start_set);
-	m_start_id = getOrCreateState(d1, d2);
+	m_start_id = getOrCreateState(d1, d2, 0);
 	m_start_set = true;
 
 	m_s1 = d1;
@@ -119,7 +122,7 @@ void Grid2D_Time::SetStart(const int& d1, const int& d2)
 void Grid2D_Time::SetGoal(const int& d1, const int& d2)
 {
 	assert(!m_goal_set);
-	m_goal_id = getOrCreateState(d1, d2);
+	m_goal_id = getOrCreateState(d1, d2, -1);
 	m_goal_set = true;
 
 	m_g1 = d1;
@@ -134,7 +137,7 @@ bool Grid2D_Time::Plan(bool save)
 	{
 		// set random start
 		m_map->GetRandomState(d1s, d2s);
-		m_start_id = getOrCreateState(d1s, d2s);
+		m_start_id = getOrCreateState(d1s, d2s, 0);
 		m_start_set = true;
 
 		m_s1 = d1s;
@@ -150,7 +153,7 @@ bool Grid2D_Time::Plan(bool save)
 		}
 		while (d1g == d1s && d2g == d2s);
 
-		m_goal_id = getOrCreateState(d1g, d2g);
+		m_goal_id = getOrCreateState(d1g, d2g, 0);
 		m_goal_set = true;
 
 		m_g1 = d1g;
@@ -178,7 +181,7 @@ bool Grid2D_Time::Plan(bool save)
 	{
 		std::vector<MapState> solpath;
 		convertPath(solution, solpath);
-		m_map->SavePath(solpCreateSearchath);
+		m_map->SavePath(solpath);
 
 		double initial_t, final_t;
 		int initial_c, final_c, total_e;
@@ -212,6 +215,7 @@ bool Grid2D_Time::Plan(bool save)
 
 void Grid2D_Time::GetSuccs(
 	int state_id,
+	Resolution::Level level,
 	std::vector<int>* succs,
 	std::vector<unsigned int>* costs,
 	std::vector<int>* action_ids)
@@ -223,7 +227,7 @@ void Grid2D_Time::GetSuccs(
 	MapState* parent = getHashEntry(state_id);
 	assert(parent);
 	assert(m_map->IsTraversible(parent->coord.at(0), parent->coord.at(1)));
-	m_closed.push_back(parent);
+	m_closed[static_cast<int>(1)].push_back(parent);
 
 	// goal state should be absorbing
 	if (state_id == GetGoalID()) {
@@ -243,20 +247,7 @@ void Grid2D_Time::GetSuccs(
 				continue;
 			}
 
-			int succ_id = generateSuccessor(parent, a1, a2, 1, succs, costs);
-					
-			/*
-			// generate coarse resolution successors for anchor
-			if (level == Resolution::ANCHOR)
-			{
-				if (NUM_RES >= 2 && parent->level >= Resolution::MID) {
-					succ_id = generateSuccessor(parent, a1, a2, MIDRES_MULT, succs, costs);
-				}
-				if (NUM_RES == 3 && parent->level >= Resolution::LOW) {
-					succ_id = generateSuccessor(parent, a1, a2, LOWRES_MULT, succs, costs);
-				}
-			}
-			*/
+			int succ_id = generateSuccessor(parent, a1, a2, succs, costs);
 		}
 	}
 }
@@ -276,7 +267,7 @@ void Grid2D_Time::SaveExpansions(
 	const std::vector<int>& action_ids)
 {
 	m_map->SaveExpansions(iter, w1, w2, m_closed);
-	for (int i = 0; i < m_heurs_map.size(); ++i) {
+	for (int i = 0; i < 1; ++i) {
 		m_closed[i].clear(); // init expansions container
 	}
 
@@ -310,40 +301,33 @@ Resolution::Level Grid2D_Time::GetResLevel(const int& state_id)
 
 int Grid2D_Time::generateSuccessor(
 	const MapState* parent,
-	int a1, int a2, int grid_res,
+	int a1, int a2,
 	std::vector<int>* succs,
 	std::vector<unsigned int>* costs)
 {
-	int succ_d1, succ_d2;
-	bool valid = true;
-	for (int m = grid_res; m >= 1; --m) {
-		succ_d1 = parent->coord.at(0) + a1*m;
-		succ_d2 = parent->coord.at(1) + a2*m;
-		valid = m_map->IsTraversible(succ_d1, succ_d2);
+	int parent_t = parent->coord.at(2);
+	if (parent_t + 1 >= m_budget) {
+		return -1;
+	}
 
-		if (!valid) {
+	int succ_d1 = parent->coord.at(0) + a1;
+	int succ_d2 = parent->coord.at(1) + a2;
+	if (!m_map->IsTraversible(succ_d1, succ_d2)) {
+		return -1;
+	}
+
+	//Checking for Identical State Already Visited
+	for(int t_prime=0; t_prime < parent_t + 1; t_prime++)
+	{
+		int status = getHashEntry(succ_d1, succ_d2, t_prime);
+		if(status !=  -1)
+		{
 			return -1;
 		}
 	}
 
-	succ_d1 = parent->coord.at(0) + a1*grid_res;
-	succ_d2 = parent->coord.at(1) + a2*grid_res;
-
-	int succ_state_id = getOrCreateState(succ_d1, succ_d2);
+	int succ_state_id = getOrCreateState(succ_d1, succ_d2, parent_t + 1);
 	MapState* successor = getHashEntry(succ_state_id);
-
-	//Checking for Identical State Already Visited
-	for(MapState* temp_state: m_states)
-	{
-		if(successor->coord.at(0) == temp_state->coord.at(0) && 
-		   successor->coord.at(1) == temp_state->coord.at(1))
-		{
-			if(successor->time > temp_state->time)
-			{
-				return -1;
-			}
-		}
-	}
 
 	succs->push_back(succ_state_id);
 	costs->push_back(cost(parent, successor));
@@ -446,13 +430,13 @@ MapState* Grid2D_Time::getHashEntry(int state_id) const
 int Grid2D_Time::getHashEntry(
 		const int& d1,
 		const int& d2,
-		const std::time_t time)
+		int time)
 {
 	MapState state;
-	state.coord.resize(2, 0);
+	state.coord.resize(3, 0);
 	state.coord.at(0) = d1;
 	state.coord.at(1) = d2;
-	state.time = time;
+	state.coord.at(2) = time;
 
 	auto sit = m_state_to_id.find(&state);
 	if (sit == m_state_to_id.end()) {
@@ -464,7 +448,7 @@ int Grid2D_Time::getHashEntry(
 int Grid2D_Time::reserveHashEntry()
 {
 	MapState* entry = new MapState;
-	entry->coord.resize(2, 0);
+	entry->coord.resize(3, 0);
 
 	int state_id = (int)m_states.size();
 
@@ -482,14 +466,14 @@ int Grid2D_Time::reserveHashEntry()
 int Grid2D_Time::createHashEntry(
 		const int& d1,
 		const int& d2,
-		const std::time_t time)
+		int  time)
 {
 	int state_id = reserveHashEntry();
 	MapState* entry = getHashEntry(state_id);
 
 	entry->coord.at(0) = d1;
 	entry->coord.at(1) = d2;
-	entry->time = time;
+	entry->coord.at(2) = time;
 	
 	/*
 	if (NUM_RES == 3 &&
@@ -514,11 +498,12 @@ int Grid2D_Time::createHashEntry(
 
 int Grid2D_Time::getOrCreateState(
 		const int& d1,
-		const int& d2)
+		const int& d2,
+		int time)
 {
-	int state_id = getHashEntry(d1, d2, std::time(NULL));
+	int state_id = getHashEntry(d1, d2, time);
 	if (state_id < 0) {
-		state_id = createHashEntry(d1, d2, std::time(NULL));
+		state_id = createHashEntry(d1, d2, time);
 	}
 	return state_id;
 }
@@ -527,7 +512,13 @@ unsigned int Grid2D_Time::cost(
 	const MapState* s1,
 	const MapState* s2)
 {
-	//TODO: Do I need a global cost variable to increment for time?
+	// //TODO: Do I need a global cost variable to increment for time?
+
+	/*
+		return the value of the cost between s1 and s2
+		of the function i want to minimise
+		i.e. the function wrt which i want to return the least cost path
+	*/
 	if (COSTMAP)
 	{
 		int dir1 = sgn(s2->coord.at(0) - s1->coord.at(0));

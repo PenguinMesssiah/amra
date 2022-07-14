@@ -35,6 +35,8 @@ void MovingAI::GetRandomState(int& d1, int& d2)
 		d1 = (int)std::round(m_distD(m_rng) * (m_h - 1));
 		d2 = (int)std::round(m_distD(m_rng) * (m_w - 1));
 
+		//printf("Potential Start: {%d, %d},\t", d1, d2);
+		/*
 		if (NUM_RES == 2)
 		{
 			if ((d1 % MIDRES_MULT != 0 || d2 % MIDRES_MULT != 0)) {
@@ -47,6 +49,7 @@ void MovingAI::GetRandomState(int& d1, int& d2)
 				continue;
 			}
 		}
+		*/
 
 		if (IsTraversible(d1, d2)) {
 			break;
