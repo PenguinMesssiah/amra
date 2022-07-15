@@ -385,7 +385,7 @@ void ARAStar::extract_path(
 	action_ids.clear();
 
 	// m_goal->state_id == m_goal_id == 0 should be true
-	for (ARAStarState *state = m_goal; state; state = state->bp) {
+	for (ARAStarState *state = m_goal->bp; state; state = state->bp) {
 		solution.push_back(state->state_id);
 		action_ids.push_back(state->actionidx);
 	}

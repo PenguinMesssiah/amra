@@ -179,31 +179,35 @@ bool Grid2D_Time::Plan(bool save)
 	{
 		std::vector<MapState> solpath;
 		convertPath(solution, solpath);
-		m_map->SavePath(solpath);
 
-		double initial_t, final_t;
-		int initial_c, final_c, total_e;
-		m_search->GetStats(initial_t, final_t, initial_c, final_c, total_e);
-
-		std::string filename(__FILE__);
-		auto found = filename.find_last_of("/\\");
-		filename = filename.substr(0, found + 1) + "../../dat/STATS.csv";
-
-		bool exists = FileExists(filename);
-		std::ofstream STATS;
-		STATS.open(filename, std::ofstream::out | std::ofstream::app);
-		if (!exists)
-		{
-			STATS << "TotalExpansions,"
-					<< "InitialSolutionTime,FinalSolutionTime,"
-					<< "InitialSolutionCost,FinalSolutionCost\n";
+		for (const auto& s: solpath) {
+			printf("%d,%d,%d\n", s.coord.at(0), s.coord.at(1), s.coord.at(2));
 		}
-		STATS << total_e << ','
-				<< initial_t << ','
-				<< final_t << ','
-				<< initial_c << ','
-				<< final_c << '\n';
-		STATS.close();
+		// m_map->SavePath(solpath);
+
+		// double initial_t, final_t;
+		// int initial_c, final_c, total_e;
+		// m_search->GetStats(initial_t, final_t, initial_c, final_c, total_e);
+
+		// std::string filename(__FILE__);
+		// auto found = filename.find_last_of("/\\");
+		// filename = filename.substr(0, found + 1) + "../../dat/STATS.csv";
+
+		// bool exists = FileExists(filename);
+		// std::ofstream STATS;
+		// STATS.open(filename, std::ofstream::out | std::ofstream::app);
+		// if (!exists)
+		// {
+		// 	STATS << "TotalExpansions,"
+		// 			<< "InitialSolutionTime,FinalSolutionTime,"
+		// 			<< "InitialSolutionCost,FinalSolutionCost\n";
+		// }
+		// STATS << total_e << ','
+		// 		<< initial_t << ','
+		// 		<< final_t << ','
+		// 		<< initial_c << ','
+		// 		<< final_c << '\n';
+		// STATS.close();
 
 		return true;
 	}
@@ -256,7 +260,11 @@ bool Grid2D_Time::IsGoal(const int& id)
 	GetStateFromID(id, state);
 	GetGoal(goal);
 
-	return (id == m_goal_id) && (state == goal);
+	return state.coord.at(0) == goal.coord.at(0) &&
+			state.coord.at(1) == goal.coord.at(1) &&
+			state.coord.at(2) <= m_budget;
+
+	// return (id == m_goal_id) && (state == goal);
 }
 
 void Grid2D_Time::SaveExpansions(
@@ -304,8 +312,8 @@ int Grid2D_Time::generateSuccessor(
 	std::vector<unsigned int>* costs)
 {
 	int parent_t = parent->coord.at(2);
-	if (parent_t + 1 >= m_budget) {
-		printf("Hit Hard Constraint\n");
+	if (parent_t + 1 > m_budget) {
+		// printf("Hit Hard Constraint\n");
 		return -1;
 	}
 
