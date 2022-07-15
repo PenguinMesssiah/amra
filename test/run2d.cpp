@@ -32,12 +32,14 @@ int main(int argc, char** argv)
 	// }
 
 	// run 2D gridworld planning for random starts and goals
-	for (int i = 0; i < 1; ++i)
+	for (int i = budget; i > 0; i--)
 	{
-		Grid2D_Time grid(mapfile, budget);
+		Grid2D_Time grid(mapfile, i);
 		grid.CreateAStarSearch();
-		// grid.SetStart(25, 5);
-		// grid.SetGoal(25, 45);
-		grid.Plan(true);
+		grid.SetStart(25, 5);
+		grid.SetGoal(25, 45);
+		bool status = grid.Plan(true);
+		if(!status)
+			break;
 	}
 }

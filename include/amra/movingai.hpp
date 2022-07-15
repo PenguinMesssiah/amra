@@ -20,12 +20,12 @@ public:
 
 	void GetRandomState(int& d1, int& d2);
 
-	void SavePath(
+	void SavePath(	
 		const std::vector<MapState>& solpath,
 		int iter=-1);
 	void SaveExpansions(
 		int iter, double w1, double w2,
-		const EXPANDS_t& expansions, bool MAP=false);
+		const EXPANDS_t& expansions, bool MAP=false, int budget=100);
 
 	bool IsValid(const int& dim1, const int& dim2) const;
 	bool IsTraversible(const int& dim1, const int& dim2) const;

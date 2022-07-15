@@ -31,7 +31,7 @@ Grid2D_Time::Grid2D_Time(const std::string& mapname, const int budget)
 m_mapname(mapname),
 m_start_set(false),
 m_goal_set(false),
-m_budget(0)
+m_budget(100)
 {
 	m_map    = std::make_unique<MovingAI>(mapname);
 	m_budget = budget;
@@ -209,10 +209,10 @@ bool Grid2D_Time::Plan(bool save)
 		// 		<< final_c << '\n';
 		// STATS.close();
 
-		return true;
+		//return true;
 	}
 
-	return false;
+	return solcost > 0;
 }
 
 void Grid2D_Time::GetSuccs(
@@ -272,7 +272,7 @@ void Grid2D_Time::SaveExpansions(
 	const std::vector<int>& curr_solution,
 	const std::vector<int>& action_ids)
 {
-	m_map->SaveExpansions(iter, w1, w2, m_closed, true);
+	m_map->SaveExpansions(iter, w1, w2, m_closed, true, m_budget);
 	m_map->SaveExpansions(iter, w1, w2, m_closed);
 	for (int i = 0; i < 1; ++i) {
 		m_closed[i].clear(); // init expansions container
