@@ -19,6 +19,8 @@ G = None
 if (len(sys.argv) > 2):
 	S = np.array([int(sys.argv[2]), int(sys.argv[3])])
 	G = np.array([int(sys.argv[4]), int(sys.argv[5])])
+if (len(sys.argv) > 6):
+	show_map = int(sys.argv[6]);
 
 nrows = ncols = -1
 for f in os.listdir(EXPS_DIR):
@@ -50,7 +52,7 @@ fig = plt.figure(figsize=(10,10))
 movingai = False
 flipped = False
 for f in os.listdir(EXPS_DIR):
-	if (f == '.gitignore'):
+	if (f == '.gitignore' or 'exps' in f):
 		continue
 
 	ax = plt.gca()
@@ -60,10 +62,12 @@ for f in os.listdir(EXPS_DIR):
 	queue = int(fields[1])
 
 	# read expansions and adjust scale
-	E = np.genfromtxt(EXPS_DIR + f, delimiter=',')
+	M = np.genfromtxt(EXPS_DIR + f, delimiter=',')
+	E = np.genfromtxt(EXPS_DIR + f + '_exps', delimiter=',')
 	expansions = None
 	if 'costs' in MAP:
 		E = E / 10
+		M = M / 10
 	if 'Cauldron' in MAP or 'TheFrozenSea' in MAP:
 		if not movingai:
 			movingai = True
@@ -104,18 +108,24 @@ for f in os.listdir(EXPS_DIR):
 	# display map
 	im = None
 	if 'costs' in MAP:
-		im = ax.imshow(E.transpose(), vmin=0.9, vmax=26, cmap=plt.get_cmap('plasma'))
+		if (show_map):
+			im = ax.imshow(M.transpose(), vmin=0.9, vmax=26, cmap=plt.get_cmap('plasma'))
+		else:
+			im = ax.imshow(E.transpose(), vmin=0.9, vmax=26, cmap=plt.get_cmap('plasma'))
 		im.cmap.set_under('k')
 		im.cmap.set_over('cyan')
 	else:
-		im = ax.imshow(E.transpose(), vmin=-1.1, vmax=1.1, cmap=plt.get_cmap('gray'))
+		if (show_map):
+			im = ax.imshow(M.transpose(), vmin=0.9, vmax=26, cmap=plt.get_cmap('plasma'))
+		else:
+			im = ax.imshow(E.transpose(), vmin=0.9, vmax=26, cmap=plt.get_cmap('plasma'))
 		im.cmap.set_under('g')
 		im.cmap.set_over('b')
 
 	ax.set_ylabel('({0:2.2f}, {1:2.2f})'.format(float(fields[2]), float(fields[3])))
 	ax.set_title(qnames[queue])
 
-	# plt.show()
-	plt.savefig(IMG_DIR + f + '.png', bbox_inches='tight')
+	plt.show()
+	# plt.savefig(IMG_DIR + f + '.png', bbox_inches='tight')
 	plt.cla()
 

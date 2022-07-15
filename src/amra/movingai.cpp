@@ -91,9 +91,32 @@ void MovingAI::SavePath(
 	OUT_PATH.close();
 }
 
+void MovingAI::writeMapToFile(MAP_t map, const std::string& savefile)
+{
+	std::ofstream EXP_MAP;
+	EXP_MAP.open(savefile, std::ofstream::out);
+	for (int r = 0; r < m_h; ++r)
+	{
+		for (int c = 0; c < m_w; ++c)
+		{
+			EXP_MAP << map[GETMAPINDEX(r, c, m_h, m_w)];
+
+			if (c < m_w - 1) {
+				EXP_MAP << ',';
+			}
+		}
+
+		if (r < m_h - 1) {
+			EXP_MAP << '\n';
+		}
+	}
+
+	EXP_MAP.close();
+}
+
 void MovingAI::SaveExpansions(
 	int iter, double w1, double w2,
-	const EXPANDS_t& expansions)
+	const EXPANDS_t& expansions, bool MAP)
 {
 	std::string filename(__FILE__), expfile;
 	auto found = filename.find_last_of("/\\");
@@ -107,6 +130,17 @@ void MovingAI::SaveExpansions(
 
 	filename += s;
 	reset(ss);
+
+	if (MAP) {
+		ss << std::setw(4) << std::setfill('0') << 1 << '_';
+		found = filename.find_last_of("/\\");
+		filename.insert(found+1+4+1, ss.str());
+		writeMapToFile(m_map, filename);
+		return;
+	}
+	else {
+		filename += "_exps";
+	}
 
 	MAP_t expmap;
 	expmap = (MAP_t)calloc(m_h * m_w, sizeof(decltype(*expmap)));
@@ -126,25 +160,7 @@ void MovingAI::SaveExpansions(
 		expfile.insert(found+1+4+1, ss.str());
 		reset(ss);
 
-		std::ofstream EXP_MAP;
-		EXP_MAP.open(expfile, std::ofstream::out);
-		for (int r = 0; r < m_h; ++r)
-		{
-			for (int c = 0; c < m_w; ++c)
-			{
-				EXP_MAP << expmap[GETMAPINDEX(r, c, m_h, m_w)];
-
-				if (c < m_w - 1) {
-					EXP_MAP << ',';
-				}
-			}
-
-			if (r < m_h - 1) {
-				EXP_MAP << '\n';
-			}
-		}
-
-		EXP_MAP.close();
+		writeMapToFile(expmap, expfile);
 	}
 
 	free(expmap);

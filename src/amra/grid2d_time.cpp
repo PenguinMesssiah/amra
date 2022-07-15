@@ -152,7 +152,7 @@ bool Grid2D_Time::Plan(bool save)
 		}
 		while (d1g == d1s && d2g == d2s);
 
-		m_goal_id = getOrCreateState(d1g, d2g, 0);
+		m_goal_id = getOrCreateState(d1g, d2g, -1);
 		m_goal_set = true;
 
 		m_g1 = d1g;
@@ -180,9 +180,9 @@ bool Grid2D_Time::Plan(bool save)
 		std::vector<MapState> solpath;
 		convertPath(solution, solpath);
 
-		for (const auto& s: solpath) {
-			printf("%d,%d,%d\n", s.coord.at(0), s.coord.at(1), s.coord.at(2));
-		}
+		// for (const auto& s: solpath) {
+		// 	printf("%d,%d,%d\n", s.coord.at(0), s.coord.at(1), s.coord.at(2));
+		// }
 		// m_map->SavePath(solpath);
 
 		// double initial_t, final_t;
@@ -272,6 +272,7 @@ void Grid2D_Time::SaveExpansions(
 	const std::vector<int>& curr_solution,
 	const std::vector<int>& action_ids)
 {
+	m_map->SaveExpansions(iter, w1, w2, m_closed, true);
 	m_map->SaveExpansions(iter, w1, w2, m_closed);
 	for (int i = 0; i < 1; ++i) {
 		m_closed[i].clear(); // init expansions container
