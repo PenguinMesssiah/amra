@@ -103,7 +103,6 @@ void Grid2D_Time::CreateAStarSearch()
 	// m_heurs.emplace_back(new EuclideanDist(this));
 	m_heurs.emplace_back(new ManhattanDist(this));
 	m_search = std::make_unique<ARAStar>(this, m_heurs.at(0));
-	printf("Restarting Search\n");
 	m_search->reset();
 	//m_default_res = Resolution::HIGH;
 }
@@ -175,7 +174,6 @@ bool Grid2D_Time::Plan(bool save)
 	std::vector<int> action_ids;
     int solcost;
     bool result = m_search->replan(&solution, &action_ids, &solcost);
-
 
 	if (result && save)
 	{
@@ -307,6 +305,7 @@ int Grid2D_Time::generateSuccessor(
 {
 	int parent_t = parent->coord.at(2);
 	if (parent_t + 1 >= m_budget) {
+		printf("Hit Hard Constraint\n");
 		return -1;
 	}
 
@@ -322,6 +321,9 @@ int Grid2D_Time::generateSuccessor(
 		int status = getHashEntry(succ_d1, succ_d2, t_prime);
 		if(status !=  -1)
 		{
+			MapState* temp = getHashEntry(status);
+			//printf("Cell Already Visited {%d,%d}\n", 
+			//	temp->coord.at(0), temp->coord.at(1));
 			return -1;
 		}
 	}
@@ -512,8 +514,6 @@ unsigned int Grid2D_Time::cost(
 	const MapState* s1,
 	const MapState* s2)
 {
-	// //TODO: Do I need a global cost variable to increment for time?
-
 	/*
 		return the value of the cost between s1 and s2
 		of the function i want to minimise
