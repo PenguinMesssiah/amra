@@ -1,6 +1,6 @@
 #include <amra/constants.hpp>
 
-const int AMRA::MAX_PLANNING_TIME_MS = 30000;
+const int AMRA::MAX_PLANNING_TIME_MS = 300000;
 const int AMRA::COST_MULT = 100;
 const std::map<char, int> AMRA::MOVINGAI_DICT = {
 	{'.', 1},
@@ -25,7 +25,7 @@ const int AMRA::NUM_RES = 2;
 // 4-connected or 8-connected grid
 const int AMRA::GRID = 4;
 // set true if using maps with non-uniform cell costs
-const bool AMRA::COSTMAP = false;
+const bool AMRA::COSTMAP = true; //Need to set this to true
 
 // UAV experiment parameters
 const double AMRA::TURNING_RADIUS = 20.0;

@@ -19,16 +19,19 @@ G = None
 if (len(sys.argv) > 2):
 	S = np.array([int(sys.argv[2]), int(sys.argv[3])])
 	G = np.array([int(sys.argv[4]), int(sys.argv[5])])
+if (len(sys.argv) > 6):
+	show_map = int(sys.argv[6]);
 
 nrows = ncols = -1
 for f in os.listdir(EXPS_DIR):
-	if (f == '.gitignore'):
+	if (f == '.gitignore' or f == '.00000001__1_1'):
 		continue
 
+	#print('f = ' + f + '\n')
 	fields = f.split('_')
 
-	iters = int(fields[0])
-	queue = int(fields[1])
+	iters = int(fields[1])
+	queue = int(fields[2])
 
 	if (iters > nrows):
 		nrows = iters
@@ -50,20 +53,22 @@ fig = plt.figure(figsize=(10,10))
 movingai = False
 flipped = False
 for f in os.listdir(EXPS_DIR):
-	if (f == '.gitignore'):
+	if (f == '.gitignore' or '.00000001' in f):
 		continue
 
 	ax = plt.gca()
 
 	fields = f.split('_')
-	iters = int(fields[0])
-	queue = int(fields[1])
+	iters = int(fields[1])
+	queue = int(fields[2])
 
 	# read expansions and adjust scale
+	M = np.genfromtxt(EXPS_DIR + f, delimiter=',')
 	E = np.genfromtxt(EXPS_DIR + f, delimiter=',')
 	expansions = None
 	if 'costs' in MAP:
 		E = E / 10
+		M = M / 10
 	if 'Cauldron' in MAP or 'TheFrozenSea' in MAP:
 		if not movingai:
 			movingai = True
@@ -88,7 +93,9 @@ for f in os.listdir(EXPS_DIR):
 		ax.scatter(expansions[:, 1], expansions[:, 0], s=5, c='b')
 
 	# plot solution path
-	P = np.genfromtxt(SOL_DIR + '{0:04d}'.format(iters) + '_' + MAP + '_path.map', delimiter=',')
+	#P = np.genfromtxt(SOL_DIR + '{0:04d}'.format(iters) + '_' + MAP + '_path.map', delimiter=',')
+	P = np.genfromtxt(SOL_DIR + '0000' + '_' + MAP + '_path.map', delimiter=',')
+
 	if movingai:
 		P[:, [0, 1]] = P[:, [1, 0]]
 	ax.plot(P[:, 0], P[:, 1], 'salmon', lw=4, alpha=1.0)
@@ -104,18 +111,24 @@ for f in os.listdir(EXPS_DIR):
 	# display map
 	im = None
 	if 'costs' in MAP:
-		im = ax.imshow(E.transpose(), vmin=0.9, vmax=26, cmap=plt.get_cmap('plasma'))
+		if (show_map):
+			im = ax.imshow(M.transpose(), vmin=0.9, vmax=26, cmap=plt.get_cmap('plasma'))
+		else:
+			im = ax.imshow(E.transpose(), vmin=0.9, vmax=26, cmap=plt.get_cmap('plasma'))
 		im.cmap.set_under('k')
 		im.cmap.set_over('cyan')
 	else:
-		im = ax.imshow(E.transpose(), vmin=-1.1, vmax=1.1, cmap=plt.get_cmap('gray'))
+		if (show_map):
+			im = ax.imshow(M.transpose(), vmin=0.9, vmax=26, cmap=plt.get_cmap('plasma'))
+		else:
+			im = ax.imshow(E.transpose(), vmin=0.9, vmax=26, cmap=plt.get_cmap('plasma'))
 		im.cmap.set_under('g')
 		im.cmap.set_over('b')
 
 	ax.set_ylabel('({0:2.2f}, {1:2.2f})'.format(float(fields[2]), float(fields[3])))
 	ax.set_title(qnames[queue])
 
-	# plt.show()
-	plt.savefig(IMG_DIR + f + '.png', bbox_inches='tight')
+	plt.show()
+	# plt.savefig(IMG_DIR + f + '.png', bbox_inches='tight')
 	plt.cla()
 

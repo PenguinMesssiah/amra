@@ -21,7 +21,7 @@ ARAStar::ARAStar(
 m_space(space),
 m_call_number(0),
 m_heur(heur),
-m_w_delta(0.5), m_w_i(10.0), m_w_f(1.0),
+m_w_delta(0.5), m_w_i(1.0), m_w_f(1.0),
 m_start_id(-1),
 m_goal_id(-1)
 {
@@ -65,7 +65,7 @@ int ARAStar::get_n_expands() const
 
 void ARAStar::reset()
 {
-	// Clear OPEN list
+	// Clear OPEN listGetSuccs
 	for (int i = 0; i < num_heuristics(); ++i) {
 		if (!m_open[i].empty()) {
 			m_open[i].clear();
@@ -385,7 +385,7 @@ void ARAStar::extract_path(
 	action_ids.clear();
 
 	// m_goal->state_id == m_goal_id == 0 should be true
-	for (ARAStarState *state = m_goal; state; state = state->bp) {
+	for (ARAStarState *state = m_goal->bp; state; state = state->bp) {
 		solution.push_back(state->state_id);
 		action_ids.push_back(state->actionidx);
 	}
