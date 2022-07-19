@@ -137,11 +137,10 @@ void MovingAI::SaveExpansions(
 		found = filename.find_last_of("/\\");
 		filename.insert(found+1+4+1, ss.str());
 		writeMapToFile(m_map, filename);
-		return;
+		//return;
 	}
-	else {
-		filename += "_exps";
-	}
+
+	filename += "_exps";
 
 	MAP_t expmap;
 	expmap = (MAP_t)calloc(m_h * m_w, sizeof(decltype(*expmap)));
@@ -158,7 +157,7 @@ void MovingAI::SaveExpansions(
 		expfile = filename;
 		ss << std::setw(4) << std::setfill('0') << q.first << '_';
 		found = expfile.find_last_of("/\\");
-		expfile.insert(found+1+4+1, ss.str());
+		//expfile.insert(found+1+4+1, ss.str());
 		reset(ss);
 
 		writeMapToFile(expmap, expfile);
