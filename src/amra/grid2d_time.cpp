@@ -19,7 +19,8 @@ auto std::hash<AMRA::MapState>::operator()(
 	const argument_type& s) const -> result_type
 {
 	size_t seed = 0;
-	boost::hash_combine(seed, boost::hash_range(s.coord.begin(), s.coord.end()-1));
+	boost::hash_combine(seed, boost::hash_range(s.coord.begin(), s.coord.end()));
+	//boost::hash_combine(seed, s.time);
 	return seed;
 }
 
@@ -169,10 +170,11 @@ bool Grid2D_Time::Plan(bool save)
 		auto goal = getHashEntry(m_goal_id);
 		m_heurs.back()->Init(robot->coord, goal->coord);
 	}
-
+	
 	std::vector<int> solution;
 	std::vector<int> action_ids;
     int solcost;
+    
     bool result = m_search->replan(&solution, &action_ids, &solcost);
 
 	if (result && save)
@@ -231,6 +233,7 @@ void Grid2D_Time::GetSuccs(
 	assert(m_map->IsTraversible(parent->coord.at(0), parent->coord.at(1)));
 	m_closed[static_cast<int>(1)].push_back(parent);
 
+	//printf("\nParent_t = %d", parent->time);
 	// goal state should be absorbing
 	if (state_id == GetGoalID()) {
 		// SMPL_INFO("Expanding goal state (id = %d)!", GetGoalID());
@@ -262,7 +265,7 @@ bool Grid2D_Time::IsGoal(const int& id)
 
 	return state.coord.at(0) == goal.coord.at(0) &&
 			state.coord.at(1) == goal.coord.at(1) &&
-			state.coord.at(2) <= m_budget;
+			state.time <= m_budget;
 
 	// return (id == m_goal_id) && (state == goal);
 }
@@ -312,7 +315,7 @@ int Grid2D_Time::generateSuccessor(
 	std::vector<int>* succs,
 	std::vector<unsigned int>* costs)
 {
-	int parent_t = parent->coord.at(2);
+	int parent_t = parent->time;
 	if (parent_t + 1 > m_budget) {
 		// printf("Hit Hard Constraint\n");
 		return -1;
@@ -320,19 +323,24 @@ int Grid2D_Time::generateSuccessor(
 
 	int succ_d1 = parent->coord.at(0) + a1;
 	int succ_d2 = parent->coord.at(1) + a2;
+
 	if (!m_map->IsTraversible(succ_d1, succ_d2)) {
 		return -1;
 	}
+
+	//printf("Goal = (%d,%d)\n", m_g1, m_g2);
+	//printf("Exp = (%d,%d,%d)\n", succ_d1, succ_d2);
 
 	//Checking for Identical State Already Visited
 	int status = getHashEntry(succ_d1, succ_d2);
 	if(status !=  -1)
 	{
     	MapState* temp = getHashEntry(status);
-    	if(temp->coord.at(2) < parent_t+1)
+
+    	if(temp->time >= 0 && temp->time < parent_t+1)
     	{
         	//printf("Cell Already Visited {%d,%d}\n"
-        	//return -1;    
+        	return -1;    
     	}
 	}
 
@@ -442,7 +450,7 @@ int Grid2D_Time::getHashEntry(
 		const int& d2)
 {
 	MapState state;
-	state.coord.resize(3, 0);
+	state.coord.resize(2, 0);
 	state.coord.at(0) = d1;
 	state.coord.at(1) = d2;
 
@@ -456,7 +464,7 @@ int Grid2D_Time::getHashEntry(
 int Grid2D_Time::reserveHashEntry()
 {
 	MapState* entry = new MapState;
-	entry->coord.resize(3, 0);
+	entry->coord.resize(2, 0);
 
 	int state_id = (int)m_states.size();
 
@@ -481,7 +489,7 @@ int Grid2D_Time::createHashEntry(
 
 	entry->coord.at(0) = d1;
 	entry->coord.at(1) = d2;
-	entry->coord.at(2) = time;
+	entry->time = time;
 	
 	/*
 	if (NUM_RES == 3 &&
