@@ -82,8 +82,7 @@ private:
 	MapState* getHashEntry(int state_id) const;
 	int getHashEntry(
 		const int& d1,
-		const int& d2,
-		int time);
+		const int& d2);
 	int reserveHashEntry();
 	int createHashEntry(
 		const int& d1,

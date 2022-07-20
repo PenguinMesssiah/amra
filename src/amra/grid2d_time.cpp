@@ -19,7 +19,7 @@ auto std::hash<AMRA::MapState>::operator()(
 	const argument_type& s) const -> result_type
 {
 	size_t seed = 0;
-	boost::hash_combine(seed, boost::hash_range(s.coord.begin(), s.coord.end()));
+	boost::hash_combine(seed, boost::hash_range(s.coord.begin(), s.coord.end()-1));
 	return seed;
 }
 
@@ -325,16 +325,15 @@ int Grid2D_Time::generateSuccessor(
 	}
 
 	//Checking for Identical State Already Visited
-	for(int t_prime=0; t_prime < parent_t + 1; t_prime++)
+	int status = getHashEntry(succ_d1, succ_d2);
+	if(status !=  -1)
 	{
-		int status = getHashEntry(succ_d1, succ_d2, t_prime);
-		if(status !=  -1)
-		{
-			MapState* temp = getHashEntry(status);
-			//printf("Cell Already Visited {%d,%d}\n", 
-			//	temp->coord.at(0), temp->coord.at(1));
-			return -1;
-		}
+    	MapState* temp = getHashEntry(status);
+    	if(temp->coord.at(2) < parent_t+1)
+    	{
+        	//printf("Cell Already Visited {%d,%d}\n"
+        	//return -1;    
+    	}
 	}
 
 	int succ_state_id = getOrCreateState(succ_d1, succ_d2, parent_t + 1);
@@ -440,14 +439,12 @@ MapState* Grid2D_Time::getHashEntry(int state_id) const
 // state has not yet been allocated.
 int Grid2D_Time::getHashEntry(
 		const int& d1,
-		const int& d2,
-		int time)
+		const int& d2)
 {
 	MapState state;
 	state.coord.resize(3, 0);
 	state.coord.at(0) = d1;
 	state.coord.at(1) = d2;
-	state.coord.at(2) = time;
 
 	auto sit = m_state_to_id.find(&state);
 	if (sit == m_state_to_id.end()) {
@@ -512,7 +509,7 @@ int Grid2D_Time::getOrCreateState(
 		const int& d2,
 		int time)
 {
-	int state_id = getHashEntry(d1, d2, time);
+	int state_id = getHashEntry(d1, d2);
 	if (state_id < 0) {
 		state_id = createHashEntry(d1, d2, time);
 	}
