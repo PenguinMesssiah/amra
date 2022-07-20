@@ -137,7 +137,6 @@ void MovingAI::SaveExpansions(
 		found = filename.find_last_of("/\\");
 		filename.insert(found+1+4+1, ss.str());
 		writeMapToFile(m_map, filename);
-		//return;
 	}
 
 	filename += "_exps";
