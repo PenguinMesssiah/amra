@@ -107,6 +107,8 @@ private:
 	bool convertPath(
 		const std::vector<int>& idpath,
 		std::vector<MapState>& path);
+
+	void resetAll();
 };
 
 }  // namespace AMRA

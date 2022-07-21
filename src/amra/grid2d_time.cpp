@@ -169,19 +169,21 @@ bool Grid2D_Time::Plan(bool save)
 		auto goal = getHashEntry(m_goal_id);
 		m_heurs.back()->Init(robot->coord, goal->coord);
 	}
-	
+
+	// variables to tract Constrained A*
 	std::vector<int> solution;
 	std::vector<int> solution_min;
 	std::vector<int> solution_max;
 	std::vector<int> action_ids;
-    int solcost, m_weight;
     int w_min_temp = W_MIN, w_max_temp = W_MAX;
+    int solcost, solcost_max, solcost_min, m_weight;
     bool result;
 
     //Backbone of Constrained A*
-    for(int n=1; n<=N_BIN-1; n++)
+    for(int i=1; i<=N_BIN-1; i++)
     {
     	m_weight = (w_max_temp+w_min_temp)/2;
+    	resetAll();
     	result = m_search->replan(&solution, &action_ids, m_weight, &solcost);
     	
     	if(solcost == -1)
@@ -191,8 +193,8 @@ bool Grid2D_Time::Plan(bool save)
     	}
 
     	//Checking Constraint Satisfaction
-    	MapState* s = getHashEntry(solution[0]);
-    	if(s->time <= m_budget)
+    	MapState* s_goal = getHashEntry(solution[solution.size()-1]);
+    	if(s_goal->time <= m_budget)
     	{
     		w_max_temp = m_weight;
     		solution_max = solution;
@@ -202,47 +204,57 @@ bool Grid2D_Time::Plan(bool save)
     		w_min_temp = m_weight;
     		solution_min = solution;
     	}
-
-
     }
+
+    //Checking Minimum Solution
+	if(solution_min.empty())
+	{
+		resetAll();
+		result = m_search->replan(&solution_min, &action_ids, w_min_temp, &solcost_min);
+		
+		if(solcost_min == -1)
+		{
+			printf("\nCA*: No Feasible Path Available");
+			return solcost_min > 0;
+		}
+
+		MapState* s_min = getHashEntry(solution[solution_min.size()-1]);
+		if(s_min->time <= m_budget)
+		{
+			//return HIGHRANGE
+			printf("\nCA*: HIGHRANGE_ERROR- W_MIN is too large.");
+			return solcost_min > 0;
+		}
+	}
+
+	//Checking Maximum Solution
+	if(solution_max.empty())
+	{
+		resetAll();
+		result = m_search->replan(&solution_max, &action_ids, w_max_temp, &solcost_max);
+		
+		if(solcost_max == -1)
+		{
+			printf("\nCA*: No Feasible Path Available");
+			return solcost_max > 0;
+		}
+
+		MapState* s_max = getHashEntry(solution[solution_max.size()-1]);
+		if(s_max->time > m_budget)
+		{
+			//return LOWRANGE
+			printf("CA*: LOWRANGE_ERROR- W_MAX is too small.");
+			return solcost_max > 0;
+		}
+	}
     
-    
+    solution = solution_max;
+    solcost  = solcost_max;
 
 	if (result && save)
 	{
 		std::vector<MapState> solpath;
 		convertPath(solution, solpath);
-
-		// for (const auto& s: solpath) {
-		// 	printf("%d,%d,%d\n", s.coord.at(0), s.coord.at(1), s.coord.at(2));
-		// }
-		// m_map->SavePath(solpath);
-
-		// double initial_t, final_t;
-		// int initial_c, final_c, total_e;
-		// m_search->GetStats(initial_t, final_t, initial_c, final_c, total_e);
-
-		// std::string filename(__FILE__);
-		// auto found = filename.find_last_of("/\\");
-		// filename = filename.substr(0, found + 1) + "../../dat/STATS.csv";
-
-		// bool exists = FileExists(filename);
-		// std::ofstream STATS;
-		// STATS.open(filename, std::ofstream::out | std::ofstream::app);
-		// if (!exists)
-		// {
-		// 	STATS << "TotalExpansions,"
-		// 			<< "InitialSolutionTime,FinalSolutionTime,"
-		// 			<< "InitialSolutionCost,FinalSolutionCost\n";
-		// }
-		// STATS << total_e << ','
-		// 		<< initial_t << ','
-		// 		<< final_t << ','
-		// 		<< initial_c << ','
-		// 		<< final_c << '\n';
-		// STATS.close();
-
-		//return true;
 	}
 
 	return solcost > 0;
@@ -603,6 +615,21 @@ std::vector<unsigned int> Grid2D_Time::cost(
 	composite_cost.at(1) = s2->time;
 
 	return composite_cost;
+}
+
+void Grid2D_Time::resetAll()
+{
+	// reset search
+	m_search->resetList();
+
+	// reset environemnt
+	for (MapState* s : m_states) {
+		if (s != NULL) {
+			delete s;
+			s = nullptr;
+		}
+	}
+	m_state_to_id.clear();
 }
 
 }  // namespace AMRA
