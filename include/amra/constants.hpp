@@ -9,6 +9,9 @@ namespace AMRA
 
 extern const int MAX_PLANNING_TIME_MS;
 extern const int COST_MULT;
+extern const int W_MIN;
+extern const int W_MAX;
+extern const int N_BIN;
 extern const std::map<char, int> MOVINGAI_DICT;
 
 extern const int MIDRES_MULT;

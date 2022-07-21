@@ -24,14 +24,14 @@ include_directories(include)
 
 add_library(
     AMRA
-    src/amra/grid2d.cpp
+    #src/amra/grid2d.cpp
     src/amra/grid2d_time.cpp
-    src/amra/griduav.cpp
+    #src/amra/griduav.cpp
     src/amra/heuristic.cpp
     src/amra/dubins.cpp
     src/amra/dijkstra.cpp
     src/amra/arastar.cpp
-    src/amra/amra.cpp
+    #src/amra/amra.cpp
     src/amra/movingai.cpp
     src/amra/constants.cpp
     # src/amra/CostConvergenceTerminationCondition.cpp
@@ -41,8 +41,8 @@ target_link_libraries(AMRA SMPL)
 add_executable(run2d test/run2d.cpp)
 target_link_libraries(run2d AMRA)
 
-add_executable(runuav test/runuav.cpp)
-target_link_libraries(runuav AMRA)
+#add_executable(runuav test/runuav.cpp)
+#target_link_libraries(runuav AMRA)
 
 # add_executable(ompl_run test/ompl_run.cpp)
 # target_include_directories(ompl_run SYSTEM PRIVATE ${OMPL_INCLUDE_DIRS})

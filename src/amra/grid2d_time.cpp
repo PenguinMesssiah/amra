@@ -4,7 +4,6 @@
 #include <amra/dubins.hpp>
 #include <amra/dijkstra.hpp>
 #include <amra/constants.hpp>
-#include <amra/amra.hpp>
 #include <amra/arastar.hpp>
 #include <amra/helpers.hpp>
 
@@ -172,10 +171,42 @@ bool Grid2D_Time::Plan(bool save)
 	}
 	
 	std::vector<int> solution;
+	std::vector<int> solution_min;
+	std::vector<int> solution_max;
 	std::vector<int> action_ids;
-    int solcost;
+    int solcost, m_weight;
+    int w_min_temp = W_MIN, w_max_temp = W_MAX;
+    bool result;
+
+    //Backbone of Constrained A*
+    for(int n=1; n<=N_BIN-1; n++)
+    {
+    	m_weight = (w_max_temp+w_min_temp)/2;
+    	result = m_search->replan(&solution, &action_ids, m_weight, &solcost);
+    	
+    	if(solcost == -1)
+    	{
+    		printf("\nCA*: No Feasible Path Available");
+    		break;
+    	}
+
+    	//Checking Constraint Satisfaction
+    	MapState* s = getHashEntry(solution[0]);
+    	if(s->time <= m_budget)
+    	{
+    		w_max_temp = m_weight;
+    		solution_max = solution;
+    	}
+    	else
+    	{
+    		w_min_temp = m_weight;
+    		solution_min = solution;
+    	}
+
+
+    }
     
-    bool result = m_search->replan(&solution, &action_ids, &solcost);
+    
 
 	if (result && save)
 	{
@@ -221,12 +252,14 @@ void Grid2D_Time::GetSuccs(
 	int state_id,
 	Resolution::Level level,
 	std::vector<int>* succs,
-	std::vector<unsigned int>* costs,
+	std::vector<unsigned int>* costs_f0,
+	std::vector<unsigned int>* costs_f1,
 	std::vector<int>* action_ids)
 {
 	assert(state_id >= 0);
 	succs->clear();
-	costs->clear();
+	costs_f0->clear();
+	costs_f1->clear();
 
 	MapState* parent = getHashEntry(state_id);
 	assert(parent);
@@ -252,7 +285,7 @@ void Grid2D_Time::GetSuccs(
 				continue;
 			}
 
-			int succ_id = generateSuccessor(parent, a1, a2, succs, costs);
+			int succ_id = generateSuccessor(parent, a1, a2, succs, costs_f0, costs_f1);
 		}
 	}
 }
@@ -313,7 +346,8 @@ int Grid2D_Time::generateSuccessor(
 	const MapState* parent,
 	int a1, int a2,
 	std::vector<int>* succs,
-	std::vector<unsigned int>* costs)
+	std::vector<unsigned int>* costs_f0,
+	std::vector<unsigned int>* costs_f1)
 {
 	int parent_t = parent->time;
 	if (parent_t + 1 > m_budget) {
@@ -348,7 +382,8 @@ int Grid2D_Time::generateSuccessor(
 	MapState* successor = getHashEntry(succ_state_id);
 
 	succs->push_back(succ_state_id);
-	costs->push_back(cost(parent, successor));
+	costs_f0->push_back(cost(parent, successor)[0]);
+	costs_f1->push_back(cost(parent, successor)[1]);
 
 	return succ_state_id;
 }
@@ -524,7 +559,7 @@ int Grid2D_Time::getOrCreateState(
 	return state_id;
 }
 
-unsigned int Grid2D_Time::cost(
+std::vector<unsigned int> Grid2D_Time::cost(
 	const MapState* s1,
 	const MapState* s2)
 {
@@ -533,6 +568,9 @@ unsigned int Grid2D_Time::cost(
 		of the function i want to minimise
 		i.e. the function wrt which i want to return the least cost path
 	*/
+
+	std::vector<unsigned int> composite_cost;
+	composite_cost.resize(2,0);
 	if (COSTMAP)
 	{
 		int dir1 = sgn(s2->coord.at(0) - s1->coord.at(0));
@@ -550,7 +588,7 @@ unsigned int Grid2D_Time::cost(
 		{
 			cost += map[GETMAPINDEX(d1, d2, h, w)];
 		}
-		return (cost * COST_MULT);
+		composite_cost.at(0) = (cost * COST_MULT);
 	}
 	else
 	{
@@ -559,8 +597,12 @@ unsigned int Grid2D_Time::cost(
 			dist += std::pow(s1->coord.at(i) - s2->coord.at(i), 2);
 		}
 		dist = std::sqrt(dist);
-		return (dist * COST_MULT);
+		composite_cost.at(0) = (dist * COST_MULT);
 	}
+
+	composite_cost.at(1) = s2->time;
+
+	return composite_cost;
 }
 
 }  // namespace AMRA

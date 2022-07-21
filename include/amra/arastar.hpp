@@ -18,7 +18,7 @@ struct ARAStarState
 {
 	int call_number;
 	int state_id;
-	unsigned int g;
+	unsigned int g, f0, f1;
 	ARAStarState* bp;
 	int actionidx;
 
@@ -60,6 +60,7 @@ public:
 	int replan(
 		std::vector<int>* solution_path,
 		std::vector<int>* action_ids,
+		int m_weight,
 		int* solution_cost) override;
 
 private:
@@ -102,8 +103,9 @@ private:
 
 	bool improve_path(
 		const double& start_time,
-		double& elapsed_time);
-	void expand(ARAStarState *state, int hidx);
+		double& elapsed_time,
+		int m_weight);
+	void expand(ARAStarState *state, int hidx, int m_weight);
 	bool is_goal(int state_id);
 
 	unsigned int compute_heuristic(int state_id, int hidx);

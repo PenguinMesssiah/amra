@@ -1,5 +1,6 @@
 // project includes
 #include <amra/arastar.hpp>
+#include <amra/grid2d_time.hpp>
 #include <amra/constants.hpp>
 #include <amra/types.hpp>
 #include <amra/heuristic.hpp>
@@ -146,6 +147,7 @@ void ARAStar::reinit_state(ARAStarState *state)
 int ARAStar::replan(
 	std::vector<int>* solution_path,
 	std::vector<int>* action_ids,
+	int m_weight,
 	int* solution_cost)
 {
 	if (is_goal(m_start_id))
@@ -196,7 +198,7 @@ int ARAStar::replan(
 		double search_start_time = GetTime();
 		double search_time = 0.0;
 		int curr_exps = get_n_expands();
-		bool result = improve_path(search_start_time, search_time);
+		bool result = improve_path(search_start_time, search_time, m_weight);
 
 		m_search_time += search_time;
 
@@ -249,7 +251,8 @@ int ARAStar::replan(
 
 bool ARAStar::improve_path(
 	const double& start_time,
-	double& elapsed_time)
+	double& elapsed_time,
+	int m_weight)
 {
 	elapsed_time = 0.0;
 	while (!m_open[0].empty() &&
@@ -274,12 +277,12 @@ bool ARAStar::improve_path(
 		if (s->state_id == m_goal_id) {
 			return true;
 		}
-		expand(s, 0);
+		expand(s, 0, m_weight);
 		++m_expands[0];
 	}
 }
 
-void ARAStar::expand(ARAStarState *s, int hidx)
+void ARAStar::expand(ARAStarState *s, int hidx, int m_weight)
 {
 	assert(!s->closed);
 	s->closed = true;
@@ -289,12 +292,14 @@ void ARAStar::expand(ARAStarState *s, int hidx)
 	}
 
 	std::vector<int> succ_ids;
-	std::vector<unsigned int> costs;
+	std::vector<unsigned int> costs_f0;
+	std::vector<unsigned int> costs_f1;
 	std::vector<int> action_ids;
 	if (is_goal(s->state_id))
 	{
 		succ_ids.push_back(m_goal_id);
-		costs.push_back(0);
+		costs_f0.push_back(0);
+		costs_f1.push_back(0);
 		action_ids.push_back(-1);
 	}
 	else
@@ -302,18 +307,23 @@ void ARAStar::expand(ARAStarState *s, int hidx)
 		m_space->GetSuccs(s->state_id,
 						  static_cast<Resolution::Level>(-1),
 						  &succ_ids,
-						  &costs,
+						  &costs_f0,
+						  &costs_f1,
 						  &action_ids);
 	}
 
+	//Computing Composite f(X) function: f(X,w) = f0(X) + w*f1(X) 
 	for (size_t sidx = 0; sidx < succ_ids.size(); ++sidx)
 	{
-		unsigned int cost = costs[sidx];
+		unsigned int cost = costs_f0[sidx];
 
 		ARAStarState *succ_state = get_state(succ_ids[sidx]);
 		reinit_state(succ_state);
 
-		unsigned int new_g = s->g + costs[sidx];
+		succ_state->f1 = (costs_f1[sidx]*COST_MULT);
+
+		unsigned int new_f0 = s->f0 + costs_f0[sidx];
+		unsigned int new_g = new_f0 + m_weight*(succ_state->f1);
 		if (new_g < succ_state->g)
 		{
 			succ_state->g = new_g;

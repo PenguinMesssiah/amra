@@ -77,7 +77,8 @@ public:
 	virtual int replan(
 		std::vector<int>* solution_path,
 		std::vector<int>* action_ids,
-		int* solution_cost) = 0;
+		int m_weight,
+		int* solution_cost = 0) = 0;
 
 	void GetStats(
 		double& initial_t, double& final_t,
@@ -104,7 +105,8 @@ public:
 		int state_id,
 		Resolution::Level level,
 		std::vector<int>* succs,
-		std::vector<unsigned int>* costs,
+		std::vector<unsigned int>* costs_f0,
+		std::vector<unsigned int>* costs_f1,
 		std::vector<int>* action_ids) = 0;
 	virtual bool IsGoal(const int& id) = 0;
 
