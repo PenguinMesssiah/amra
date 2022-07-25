@@ -109,6 +109,7 @@ private:
 		std::vector<MapState>& path);
 
 	void resetAll();
+	void resetStartGoalStates();
 };
 
 }  // namespace AMRA

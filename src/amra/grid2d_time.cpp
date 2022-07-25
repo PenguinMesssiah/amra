@@ -183,12 +183,11 @@ bool Grid2D_Time::Plan(bool save)
     for(int i=1; i<=N_BIN-1; i++)
     {
     	m_weight = (w_max_temp+w_min_temp)/2;
-    	resetAll();
     	result = m_search->replan(&solution, &action_ids, m_weight, &solcost);
     	
     	if(solcost == -1)
     	{
-    		printf("\nCA*: No Feasible Path Available");
+    		printf("CA*: No Feasible Path Available for w = %d\n", m_weight);
     		break;
     	}
 
@@ -204,17 +203,21 @@ bool Grid2D_Time::Plan(bool save)
     		w_min_temp = m_weight;
     		solution_min = solution;
     	}
+
+    	resetAll();
+    	resetStartGoalStates();
     }
 
     //Checking Minimum Solution
 	if(solution_min.empty())
 	{
 		resetAll();
+		resetStartGoalStates();
 		result = m_search->replan(&solution_min, &action_ids, w_min_temp, &solcost_min);
 		
 		if(solcost_min == -1)
 		{
-			printf("\nCA*: No Feasible Path Available");
+			printf("\nCA*: No Feasible Path Available\n");
 			return solcost_min > 0;
 		}
 
@@ -222,7 +225,7 @@ bool Grid2D_Time::Plan(bool save)
 		if(s_min->time <= m_budget)
 		{
 			//return HIGHRANGE
-			printf("\nCA*: HIGHRANGE_ERROR- W_MIN is too large.");
+			printf("CA*: HIGHRANGE_ERROR: W_MIN is too large.\n");
 			return solcost_min > 0;
 		}
 	}
@@ -231,11 +234,12 @@ bool Grid2D_Time::Plan(bool save)
 	if(solution_max.empty())
 	{
 		resetAll();
+		resetStartGoalStates();
 		result = m_search->replan(&solution_max, &action_ids, w_max_temp, &solcost_max);
 		
 		if(solcost_max == -1)
 		{
-			printf("\nCA*: No Feasible Path Available");
+			printf("\nCA*: No Feasible Path Available\n");
 			return solcost_max > 0;
 		}
 
@@ -243,7 +247,7 @@ bool Grid2D_Time::Plan(bool save)
 		if(s_max->time > m_budget)
 		{
 			//return LOWRANGE
-			printf("CA*: LOWRANGE_ERROR- W_MAX is too small.");
+			printf("CA*: LOWRANGE_ERROR- W_MAX is too small.\n");
 			return solcost_max > 0;
 		}
 	}
@@ -512,6 +516,7 @@ int Grid2D_Time::reserveHashEntry()
 {
 	MapState* entry = new MapState;
 	entry->coord.resize(2, 0);
+	entry->time = -1; 
 
 	int state_id = (int)m_states.size();
 
@@ -565,7 +570,12 @@ int Grid2D_Time::getOrCreateState(
 		int time)
 {
 	int state_id = getHashEntry(d1, d2);
-	if (state_id < 0) {
+	if(d1 == m_g1 && d2 == m_g2)
+	{
+		MapState* tempGoal = getHashEntry(state_id);
+		tempGoal->time = time;
+	}
+	else if (state_id < 0) {
 		state_id = createHashEntry(d1, d2, time);
 	}
 	return state_id;
@@ -613,23 +623,32 @@ std::vector<unsigned int> Grid2D_Time::cost(
 	}
 
 	composite_cost.at(1) = s2->time;
-
 	return composite_cost;
 }
 
 void Grid2D_Time::resetAll()
 {
 	// reset search
-	m_search->resetList();
+	m_search->reset();
 
-	// reset environemnt
+	//reset environemnt
 	for (MapState* s : m_states) {
-		if (s != NULL) {
+		if (s != nullptr) {
 			delete s;
 			s = nullptr;
 		}
 	}
+	m_states.clear();
 	m_state_to_id.clear();
+}
+
+void Grid2D_Time::resetStartGoalStates()
+{
+	m_start_set = false; m_goal_set = false;
+	SetStart(25, 5);
+	SetGoal(25, 45);
+	m_search->set_start(m_start_id);
+	m_search->set_goal(m_goal_id);
 }
 
 }  // namespace AMRA

@@ -234,7 +234,7 @@ int ARAStar::replan(
 		}
 
 		extract_path(*solution_path, *action_ids, *solution_cost);
-		SMPL_INFO("Solved with (%f) | expansions = %d | time = %f | cost = %d", m_w, get_n_expands(), search_time, *solution_cost);
+		SMPL_INFO("Solved with (%f) | expansions = %d | time = %f | weight = %d | cost = %d", m_w, get_n_expands(), search_time, m_weight, *solution_cost);
 		if (curr_exps < get_n_expands()) {
 			m_space->SaveExpansions(m_iter, m_w, 1.0, *solution_path, *action_ids);
 		}
@@ -348,6 +348,8 @@ void ARAStar::expand(ARAStarState *s, int hidx, int m_weight)
 
 		unsigned int new_f0 = s->f0 + costs_f0[sidx];
 		unsigned int new_g = new_f0 + m_weight*(succ_state->f1);
+		// printf("new_g = %d, new_f0 = %d, m_weight = %d, f1 = %d\n",
+		// 	new_g, new_f0, m_weight, succ_state->f1);
 		if (new_g < succ_state->g)
 		{
 			succ_state->g = new_g;
