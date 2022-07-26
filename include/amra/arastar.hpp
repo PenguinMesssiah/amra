@@ -56,7 +56,6 @@ public:
 	};
 	int get_n_expands() const override;
 	void reset() override;
-	void resetList() override;
 
 	int replan(
 		std::vector<int>* solution_path,

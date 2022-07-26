@@ -73,8 +73,7 @@ public:
 	virtual void set_max_planning_time(double max_planning_time_ms) = 0;
 	virtual int get_n_expands() const = 0;
 	virtual void reset() = 0;
-	virtual void resetList() = 0;
-
+	
 	virtual int replan(
 		std::vector<int>* solution_path,
 		std::vector<int>* action_ids,

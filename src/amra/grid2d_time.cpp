@@ -121,7 +121,7 @@ void Grid2D_Time::SetStart(const int& d1, const int& d2)
 void Grid2D_Time::SetGoal(const int& d1, const int& d2)
 {
 	assert(!m_goal_set);
-	m_goal_id = createGoalState(d1, d2, -1);
+	m_goal_id = getOrCreateState(d1, d2, -1);
 	m_goal_set = true;
 
 	m_g1 = d1;
@@ -218,7 +218,7 @@ bool Grid2D_Time::Plan(bool save)
 
 	if(solcost_min == -1)
 	{
-		printf("CA*: No Minimum Feasible Path Available | w = %d\n", m_weight);
+		printf("CA*: No Minimum Feasible Path Available | w = %d\n", w_min_temp);
 		return -1;
 	}
 
@@ -563,7 +563,7 @@ int Grid2D_Time::getOrCreateState(
 		int time)
 {
 	int state_id = getHashEntry(d1, d2);
-	if(d1 == m_g1 && d2 == m_g2)
+	if(state_id == m_goal_id)
 	{
 		MapState* tempGoal = getHashEntry(state_id);
 		tempGoal->time = time;

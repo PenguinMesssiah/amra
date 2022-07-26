@@ -38,7 +38,7 @@ const bool AMRA::DIJKSTRA = false;
 
 // run successive search iterations from scratch?
 // (with no reuse of previous search effort)
-const bool AMRA::SUCCESSIVE = false;
+const bool AMRA::SUCCESSIVE = true;
 
 // minimum and maximum weights for composite f(X)
 // number of times we half the binary search for w

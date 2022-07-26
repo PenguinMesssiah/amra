@@ -93,30 +93,6 @@ void ARAStar::reset()
 	m_goal = nullptr;
 }
 
-void ARAStar::resetList()
-{
-	// Clear OPEN listGetSuccs
-	for (int i = 0; i < num_heuristics(); ++i) {
-		if (!m_open[i].empty()) {
-			m_open[i].clear();
-		}
-	}
-
-	// free states
-	for (size_t i = 0; i < m_states.size(); ++i)
-	{
-		if (m_states[i] != nullptr)
-		{
-			free(m_states[i]);
-			// m_states[i] = nullptr;
-		}
-	}
-
-	// Clear state table
-	m_states.clear();
-	// m_states.shrink_to_fit();
-}
-
 // Get the search state corresponding to a graph state, creating a new state if
 // one has not been created yet.
 ARAStarState* ARAStar::get_state(int state_id)
@@ -258,6 +234,7 @@ int ARAStar::replan(
 		}
 	}
 
+	//printf("Solution Cost: %d | m_w_solve: %d\n", *solution_cost, m_w_solve);
 	if (m_w_solve < 0)
 	{
 		solution_path->clear();
@@ -304,6 +281,8 @@ bool ARAStar::improve_path(
 		expand(s, 0, m_weight);
 		++m_expands[0];
 	}
+
+	printf("Just left the while loop bc fuck it\n");
 }
 
 void ARAStar::expand(ARAStarState *s, int hidx, int m_weight)
