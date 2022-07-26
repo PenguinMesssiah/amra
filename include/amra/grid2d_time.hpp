@@ -50,7 +50,7 @@ public:
 	bool IsGoal(const int& id) override;
 	
 	void SaveExpansions(
-		int iter, double w1, double w2,
+		int iter, double w1, double w2, int m_weight,
 		const std::vector<int>& curr_solution,
 		const std::vector<int>& action_ids) override;
 

@@ -115,13 +115,14 @@ void MovingAI::writeMapToFile(MAP_t map, const std::string& savefile)
 }
 
 void MovingAI::SaveExpansions(
-	int iter, double w1, double w2,
+	int iter, double w1, double w2, int m_weight,
 	const EXPANDS_t& expansions, bool MAP, int budget)
 {
 	std::string filename(__FILE__), expfile;
 	auto found = filename.find_last_of("/\\");
 	filename = filename.substr(0, found + 1) + "../../dat/expansions/";
-	filename += std::to_string(budget) + "_";
+	filename += "b" + std::to_string(budget) + "_";
+	//filename += "w" + std::to_string(m_weight) + "_";
 
 	std::stringstream ss;
 	ss << std::setw(4) << std::setfill('0') << iter << '_';

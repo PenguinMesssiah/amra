@@ -187,7 +187,7 @@ bool Grid2D_Time::Plan(bool save)
     	
     	if(solcost == -1)
     	{
-    		printf("CA*: No Feasible Path Available for w = %d\n", m_weight);
+    		printf("CA*: No Feasible Path Available | w = %d\n", m_weight);
     		break;
     	}
 
@@ -197,11 +197,13 @@ bool Grid2D_Time::Plan(bool save)
     	{
     		w_max_temp = m_weight;
     		solution_max = solution;
+    		solcost_max = solcost;
     	}
     	else
     	{
     		w_min_temp = m_weight;
     		solution_min = solution;
+    		solcost_min = solcost;
     	}
 
     	resetAll();
@@ -211,47 +213,38 @@ bool Grid2D_Time::Plan(bool save)
     //Checking Minimum Solution
 	if(solution_min.empty())
 	{
-		resetAll();
-		resetStartGoalStates();
 		result = m_search->replan(&solution_min, &action_ids, w_min_temp, &solcost_min);
-		
-		if(solcost_min == -1)
-		{
-			printf("\nCA*: No Feasible Path Available\n");
-			return solcost_min > 0;
-		}
+	}
 
-		MapState* s_min = getHashEntry(solution[solution_min.size()-1]);
-		if(s_min->time <= m_budget)
-		{
-			//return HIGHRANGE
-			printf("CA*: HIGHRANGE_ERROR: W_MIN is too large.\n");
-			return solcost_min > 0;
-		}
+	if(solcost_min == -1)
+	{
+		printf("CA*: No Minimum Feasible Path Available | w = %d\n", m_weight);
+		return -1;
+	}
+
+	MapState* s_min = getHashEntry(solution[solution_min.size()-1]);
+	if(s_min->time <= m_budget)
+	{
+		//return HIGHRANGE
+		printf("CA*: HIGHRANGE_ERROR: W_MIN is too large.\n");
+		return -1;
 	}
 
 	//Checking Maximum Solution
 	if(solution_max.empty())
 	{
-		resetAll();
-		resetStartGoalStates();
 		result = m_search->replan(&solution_max, &action_ids, w_max_temp, &solcost_max);
-		
-		if(solcost_max == -1)
-		{
-			printf("\nCA*: No Feasible Path Available\n");
-			return solcost_max > 0;
-		}
-
-		MapState* s_max = getHashEntry(solution[solution_max.size()-1]);
-		if(s_max->time > m_budget)
-		{
-			//return LOWRANGE
-			printf("CA*: LOWRANGE_ERROR- W_MAX is too small.\n");
-			return solcost_max > 0;
-		}
 	}
     
+	MapState* s_max = getHashEntry(solution[solution_max.size()-1]);
+	if(s_max->time > m_budget)
+	{
+		//return LOWRANGE
+		printf("CA*: LOWRANGE_ERROR- W_MAX is too small.\n");
+		return -1;
+	}
+
+	//Return Max Solution
     solution = solution_max;
     solcost  = solcost_max;
 
@@ -320,11 +313,11 @@ bool Grid2D_Time::IsGoal(const int& id)
 }
 
 void Grid2D_Time::SaveExpansions(
-	int iter, double w1, double w2,
+	int iter, double w1, double w2, int m_weight,
 	const std::vector<int>& curr_solution,
 	const std::vector<int>& action_ids)
 {
-	m_map->SaveExpansions(iter, w1, w2, m_closed, true, m_budget);
+	m_map->SaveExpansions(iter, w1, w2, m_weight, m_closed, true, m_budget);
 	//m_map->SaveExpansions(iter, w1, w2, m_closed, true);
 	for (int i = 0; i < m_closed.size(); ++i) {
 		m_closed[i].clear(); // init expansions container

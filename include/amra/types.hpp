@@ -112,7 +112,7 @@ public:
 	virtual bool IsGoal(const int& id) = 0;
 
 	virtual void SaveExpansions(
-		int iter, double w1, double w2,
+		int iter, double w1, double w2, int m_weight,
 		const std::vector<int>& curr_solution,
 		const std::vector<int>& action_ids) = 0;
 

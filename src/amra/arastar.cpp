@@ -236,7 +236,7 @@ int ARAStar::replan(
 		extract_path(*solution_path, *action_ids, *solution_cost);
 		SMPL_INFO("Solved with (%f) | expansions = %d | time = %f | weight = %d | cost = %d", m_w, get_n_expands(), search_time, m_weight, *solution_cost);
 		if (curr_exps < get_n_expands()) {
-			m_space->SaveExpansions(m_iter, m_w, 1.0, *solution_path, *action_ids);
+			m_space->SaveExpansions(m_iter, m_w, 1.0, m_weight, *solution_path, *action_ids);
 		}
 
 		if (m_w == m_w_f) {

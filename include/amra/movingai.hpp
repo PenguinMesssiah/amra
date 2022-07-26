@@ -24,7 +24,7 @@ public:
 		const std::vector<MapState>& solpath,
 		int iter=-1);
 	void SaveExpansions(
-		int iter, double w1, double w2,
+		int iter, double w1, double w2, int m_weight,
 		const EXPANDS_t& expansions, bool MAP=false, int budget=0);
 
 	bool IsValid(const int& dim1, const int& dim2) const;
