@@ -197,13 +197,13 @@ bool Grid2D_Time::Plan(bool save)
     	{
     		w_max_temp = m_weight;
     		solution_max = solution;
-    		solcost_max = solcost/COST_MULT;
+    		solcost_max = solcost;
     	}
     	else
     	{
     		w_min_temp = m_weight;
     		solution_min = solution;
-    		solcost_min = solcost/COST_MULT;
+    		solcost_min = solcost;
     	}
 
     	resetAll();
