@@ -273,7 +273,7 @@ void Grid2D_Time::SaveExpansions(
 	const std::vector<int>& action_ids)
 {
 	m_map->SaveExpansions(iter, w1, w2, m_closed, true, m_budget);
-	m_map->SaveExpansions(iter, w1, w2, m_closed, true);
+	//m_map->SaveExpansions(iter, w1, w2, m_closed, true);
 	for (int i = 0; i < 1; ++i) {
 		m_closed[i].clear(); // init expansions container
 	}
