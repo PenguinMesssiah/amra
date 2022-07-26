@@ -121,7 +121,7 @@ void Grid2D_Time::SetStart(const int& d1, const int& d2)
 void Grid2D_Time::SetGoal(const int& d1, const int& d2)
 {
 	assert(!m_goal_set);
-	m_goal_id = getOrCreateState(d1, d2, -1);
+	m_goal_id = createGoalState(d1, d2, -1);
 	m_goal_set = true;
 
 	m_g1 = d1;
@@ -326,7 +326,7 @@ void Grid2D_Time::SaveExpansions(
 {
 	m_map->SaveExpansions(iter, w1, w2, m_closed, true, m_budget);
 	//m_map->SaveExpansions(iter, w1, w2, m_closed, true);
-	for (int i = 0; i < 1; ++i) {
+	for (int i = 0; i < m_closed.size(); ++i) {
 		m_closed[i].clear(); // init expansions container
 	}
 
@@ -526,7 +526,7 @@ int Grid2D_Time::reserveHashEntry()
 	// // map planner state -> graph state
 	// int* pinds = new int[NUMOFINDICES_STATEID2IND];
 	// std::fill(pinds, pinds + NUMOFINDICES_STATEID2IND, -1);
-	// StateID2IndexMapping.push_back(pinds);
+	// StateID2IndexMapping.push_createGoalStateback(pinds);
 
 	return state_id;
 }
@@ -578,6 +578,17 @@ int Grid2D_Time::getOrCreateState(
 	else if (state_id < 0) {
 		state_id = createHashEntry(d1, d2, time);
 	}
+	return state_id;
+}
+
+
+int Grid2D_Time::createGoalState(
+	const int& d1,
+	const int& d2,
+	int time)
+{
+	int state_id = createHashEntry(d1, d2, time);
+	
 	return state_id;
 }
 

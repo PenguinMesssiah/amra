@@ -143,8 +143,13 @@ void MovingAI::SaveExpansions(
 
 	MAP_t expmap;
 	expmap = (MAP_t)calloc(m_h * m_w, sizeof(decltype(*expmap)));
+	int i=0;
 	for (const auto& q: expansions)
 	{
+		if(std::get< std::vector<MapState*> >(q).size() == 0)
+		{
+			continue;
+		}
 		std::memcpy(expmap, m_map, m_h * m_w * sizeof(decltype(*expmap)));
 		for (const auto& s: q.second) {
 			expmap[GETMAPINDEX(s->coord.at(0), s->coord.at(1), m_h, m_w)] = MOVINGAI_DICT.find('E')->second;

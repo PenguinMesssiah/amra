@@ -93,6 +93,10 @@ private:
 		const int& d1,
 		const int& d2,
 		int time);
+	int createGoalState(
+		const int& d1,
+		const int& d2,
+		int time);
 
 	int generateSuccessor(
 		const MapState* parent,
