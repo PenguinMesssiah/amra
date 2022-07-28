@@ -171,12 +171,10 @@ bool Grid2D_Time::Plan(bool save)
 	}
 
 	// variables to tract Constrained A*
-	std::vector<int> solution;
-	std::vector<int> solution_min;
-	std::vector<int> solution_max;
-	std::vector<int> action_ids;
-    int w_min_temp = W_MIN, w_max_temp = W_MAX;
-    int solcost, solcost_max, solcost_min, m_weight;
+	std::vector<int> solution, action_ids;
+	std::vector<MapState> solution_min, solution_max;
+    float w_min_temp = W_MIN, w_max_temp = W_MAX, m_weight;
+    int solcost, solcost_max, solcost_min; 
     bool result;
 
     //Backbone of Constrained A*
@@ -187,43 +185,48 @@ bool Grid2D_Time::Plan(bool save)
     	
     	if(solcost == -1)
     	{
-    		printf("CA*: No Feasible Path Available | w = %d\n", m_weight);
+    		printf("CA*: No Feasible Path Available | w = %f\n", m_weight);
     		break;
     	}
 
     	//Checking Constraint Satisfaction
-    	MapState* s_goal = getHashEntry(solution[solution.size()-1]);
+    	MapState* s_goal = getHashEntry(solution.back());
+    	printf("s_goal->time = %d, m_weight = %f (%f, %f)\n", s_goal->time, m_weight, w_max_temp, w_min_temp);
     	if(s_goal->time <= m_budget)
     	{
     		w_max_temp = m_weight;
-    		solution_max = solution;
+    		convertPath(solution, solution_max);
     		solcost_max = solcost;
     	}
     	else
     	{
     		w_min_temp = m_weight;
-    		solution_min = solution;
+    		convertPath(solution, solution_min);
     		solcost_min = solcost;
     	}
+    	printf("updated m_weight bounds = (%f, %f)\n", w_max_temp, w_min_temp);
 
-    	resetAll();
-    	resetStartGoalStates();
+    	if (i != N_BIN-1)
+    	{
+	    	resetAll();
+	    	resetStartGoalStates();
+    	}
     }
 
     //Checking Minimum Solution
 	if(solution_min.empty())
 	{
-		result = m_search->replan(&solution_min, &action_ids, w_min_temp, &solcost_min);
+		result = m_search->replan(&solution, &action_ids, w_min_temp, &solcost_min);
+		convertPath(solution, solution_min);
 	}
 
 	if(solcost_min == -1)
 	{
-		printf("CA*: No Minimum Feasible Path Available | w = %d\n", w_min_temp);
+		printf("CA*: No Minimum Feasible Path Available | w = %f\n", w_min_temp);
 		return -1;
 	}
 
-	MapState* s_min = getHashEntry(solution[solution_min.size()-1]);
-	if(s_min->time <= m_budget)
+	if(solution_min.back().time <= m_budget)
 	{
 		//return HIGHRANGE
 		printf("CA*: HIGHRANGE_ERROR: W_MIN is too large.\n");
@@ -233,11 +236,11 @@ bool Grid2D_Time::Plan(bool save)
 	//Checking Maximum Solution
 	if(solution_max.empty())
 	{
-		result = m_search->replan(&solution_max, &action_ids, w_max_temp, &solcost_max);
+		result = m_search->replan(&solution, &action_ids, w_max_temp, &solcost_max);
+		convertPath(solution, solution_max);
 	}
     
-	MapState* s_max = getHashEntry(solution[solution_max.size()-1]);
-	if(s_max->time > m_budget)
+	if(solution_max.back().time > m_budget)
 	{
 		//return LOWRANGE
 		printf("CA*: LOWRANGE_ERROR- W_MAX is too small.\n");
@@ -245,14 +248,19 @@ bool Grid2D_Time::Plan(bool save)
 	}
 
 	//Return Max Solution
-    solution = solution_max;
-    solcost  = solcost_max/COST_MULT;
+    solcost_max /= COST_MULT;
+    printf("**********************\n");
+    printf("Final Solution\n");
+    printf("Path cost = %d | Path length = %d | w = %f\n", solcost_max, solution_max.back().time, m_weight);
+    printf("**********************\n");
 
-	if (result && save)
-	{
-		std::vector<MapState> solpath;
-		convertPath(solution, solpath);
-	}
+    m_map->SavePath(solution_max, 0);
+
+	// if (result && save)
+	// {
+	// 	std::vector<MapState> solpath;
+	// 	convertPath(solution, solpath);
+	// }
 
 	return solcost > 0;
 }
@@ -306,8 +314,7 @@ bool Grid2D_Time::IsGoal(const int& id)
 	GetGoal(goal);
 
 	return state.coord.at(0) == goal.coord.at(0) &&
-			state.coord.at(1) == goal.coord.at(1) &&
-			state.time <= m_budget;
+			state.coord.at(1) == goal.coord.at(1);
 
 	// return (id == m_goal_id) && (state == goal);
 }
@@ -323,9 +330,9 @@ void Grid2D_Time::SaveExpansions(
 		m_closed[i].clear(); // init expansions container
 	}
 
-	std::vector<MapState> solpath;
-	convertPath(curr_solution, solpath);
-	m_map->SavePath(solpath, iter);
+	// std::vector<MapState> solpath;
+	// convertPath(curr_solution, solpath);
+	// m_map->SavePath(solpath, iter);
 }
 
 void Grid2D_Time::GetStart(MapState& start)
@@ -359,10 +366,10 @@ int Grid2D_Time::generateSuccessor(
 	std::vector<unsigned int>* costs_f1)
 {
 	int parent_t = parent->time;
-	if (parent_t + 1 > m_budget) {
-		// printf("Hit Hard Constraint\n");
-		return -1;
-	}
+	// if (parent_t + 1 > m_budget) {
+	// 	// printf("Hit Hard Constraint\n");
+	// 	return -1;
+	// }
 
 	int succ_d1 = parent->coord.at(0) + a1;
 	int succ_d2 = parent->coord.at(1) + a2;
@@ -375,17 +382,17 @@ int Grid2D_Time::generateSuccessor(
 	//printf("Exp = (%d,%d,%d)\n", succ_d1, succ_d2);
 
 	//Checking for Identical State Already Visited
-	int status = getHashEntry(succ_d1, succ_d2);
-	if(status !=  -1)
-	{
-    	MapState* temp = getHashEntry(status);
+	// int status = getHashEntry(succ_d1, succ_d2);
+	// if(status !=  -1)
+	// {
+ //    	MapState* temp = getHashEntry(status);
 
-    	if(temp->time >= 0 && temp->time < parent_t+1)
-    	{
-        	//printf("Cell Already Visited {%d,%d}\n"
-        	return -1;    
-    	}
-	}
+ //    	if(temp->time >= 0 && temp->time < parent_t+1)
+ //    	{
+ //        	//printf("Cell Already Visited {%d,%d}\n"
+ //        	return -1;    
+ //    	}
+	// }
 
 	int succ_state_id = getOrCreateState(succ_d1, succ_d2, parent_t + 1);
 	MapState* successor = getHashEntry(succ_state_id);

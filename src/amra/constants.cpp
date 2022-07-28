@@ -42,6 +42,6 @@ const bool AMRA::SUCCESSIVE = true;
 
 // minimum and maximum weights for composite f(X)
 // number of times we half the binary search for w
-const int AMRA::W_MIN = 0;
-const int AMRA::W_MAX = 1000;
-const int AMRA::N_BIN = 10;
+const int AMRA::W_MIN = 0.0;
+const int AMRA::W_MAX = 1000.0;
+const int AMRA::N_BIN = 100.0;

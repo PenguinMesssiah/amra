@@ -91,6 +91,13 @@ void ARAStar::reset()
 	m_goal_id = -1;
 	m_start = nullptr;
 	m_goal = nullptr;
+
+	m_expands[0] = 0;
+	m_initial_t = 0.0;
+	m_final_t = 0.0;
+	m_initial_c = -1;
+	m_final_c = -1;
+	m_total_e = -1;
 }
 
 // Get the search state corresponding to a graph state, creating a new state if
@@ -132,6 +139,8 @@ void ARAStar::reinit_state(ARAStarState *state)
 {
 	if (state->call_number != m_call_number) {
 		state->call_number = m_call_number;
+		state->f0 = std::numeric_limits<unsigned int>::max();
+		state->f1 = std::numeric_limits<unsigned int>::max();
 		state->g = std::numeric_limits<unsigned int>::max();
 		state->bp = nullptr;
 
@@ -147,7 +156,7 @@ void ARAStar::reinit_state(ARAStarState *state)
 int ARAStar::replan(
 	std::vector<int>* solution_path,
 	std::vector<int>* action_ids,
-	int m_weight,
+	float m_weight,
 	int* solution_cost)
 {
 	if (is_goal(m_start_id))
@@ -168,6 +177,8 @@ int ARAStar::replan(
 	reinit_state(m_goal);
 	reinit_state(m_start);
 	m_start->g = 0;
+	m_start->f0 = 0;
+	m_start->f1 = 0;
 
 	// clear all OPEN lists
 	for (int i = 0; i < num_heuristics(); ++i) {
@@ -210,7 +221,7 @@ int ARAStar::replan(
 		}
 
 		extract_path(*solution_path, *action_ids, *solution_cost);
-		SMPL_INFO("Solved with (%f) | expansions = %d | time = %f | weight = %d | cost = %d", m_w, get_n_expands(), search_time, m_weight, *solution_cost);
+		SMPL_INFO("Solved with (%f) | expansions = %d | time = %f | weight = %f | cost = %d", m_w, get_n_expands(), search_time, m_weight, *solution_cost);
 		if (curr_exps < get_n_expands()) {
 			m_space->SaveExpansions(m_iter, m_w, 1.0, m_weight, *solution_path, *action_ids);
 		}
@@ -253,7 +264,7 @@ int ARAStar::replan(
 bool ARAStar::improve_path(
 	const double& start_time,
 	double& elapsed_time,
-	int m_weight)
+	float m_weight)
 {
 	elapsed_time = 0.0;
 	while (!m_open[0].empty() &&
@@ -285,7 +296,7 @@ bool ARAStar::improve_path(
 	printf("Just left the while loop bc fuck it\n");
 }
 
-void ARAStar::expand(ARAStarState *s, int hidx, int m_weight)
+void ARAStar::expand(ARAStarState *s, int hidx, float m_weight)
 {
 	assert(!s->closed);
 	s->closed = true;
@@ -323,14 +334,15 @@ void ARAStar::expand(ARAStarState *s, int hidx, int m_weight)
 		ARAStarState *succ_state = get_state(succ_ids[sidx]);
 		reinit_state(succ_state);
 
-		succ_state->f1 = (costs_f1[sidx]*COST_MULT);
-
 		unsigned int new_f0 = s->f0 + costs_f0[sidx];
-		unsigned int new_g = new_f0 + m_weight*(succ_state->f1);
+		unsigned int new_f1 = costs_f1[sidx]*COST_MULT;
+		unsigned int new_g = new_f0 + m_weight*new_f1;
 		// printf("new_g = %d, new_f0 = %d, m_weight = %d, f1 = %d\n",
 		// 	new_g, new_f0, m_weight, succ_state->f1);
 		if (new_g < succ_state->g)
 		{
+			succ_state->f0 = new_f0;
+			succ_state->f1 = new_f1;
 			succ_state->g = new_g;
 			succ_state->bp = s;
 			if (succ_state->closed) {

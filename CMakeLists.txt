@@ -4,7 +4,7 @@ project(amra)
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -fmax-errors=5")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -g -fmax-errors=5")
 
 find_package(Boost REQUIRED COMPONENTS filesystem program_options system)
 # find_package(OMPL REQUIRED)

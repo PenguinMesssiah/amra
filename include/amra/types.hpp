@@ -77,7 +77,7 @@ public:
 	virtual int replan(
 		std::vector<int>* solution_path,
 		std::vector<int>* action_ids,
-		int m_weight,
+		float m_weight,
 		int* solution_cost = 0) = 0;
 
 	void GetStats(
