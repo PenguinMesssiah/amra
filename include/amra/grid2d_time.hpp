@@ -58,7 +58,7 @@ public:
 	void GetStateFromID(const int& id, MapState& state);
 
 	Resolution::Level GetResLevel(const int& state_id) override;
-
+	
 private:
 	std::string m_mapname;
 	std::unique_ptr<MovingAI> m_map;

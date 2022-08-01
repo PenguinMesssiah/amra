@@ -111,6 +111,7 @@ void Grid2D_Time::CreateAStarSearch()
 void Grid2D_Time::SetStart(const int& d1, const int& d2)
 {
 	assert(!m_start_set);
+	assert(m_map->IsTraversible(d1,d2));
 	m_start_id = getOrCreateState(d1, d2, 0);
 	m_start_set = true;
 
@@ -122,6 +123,7 @@ void Grid2D_Time::SetStart(const int& d1, const int& d2)
 void Grid2D_Time::SetGoal(const int& d1, const int& d2)
 {
 	assert(!m_goal_set);
+	assert(m_map->IsTraversible(d1,d2));
 	m_goal_id = getOrCreateState(d1, d2, -1);
 	m_goal_set = true;
 
@@ -176,7 +178,12 @@ bool Grid2D_Time::Plan(bool save)
     int solcost;
     
     bool result = m_search->replan(&solution, &action_ids, &solcost);
-
+    if(!solution.empty())
+    {
+    	int path_length = getHashEntry(solution.at(solution.size()-1))->time;
+    	printf("path Length = %d\n", path_length);	
+    }
+    
 	if (result && save)
 	{
 		std::vector<MapState> solpath;

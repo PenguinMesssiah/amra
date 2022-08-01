@@ -23,8 +23,8 @@ int main(int argc, char** argv)
 	
 	Grid2D_Time grid(mapfile, budget);
 	grid.CreateAStarSearch();
-	grid.SetStart(25, 5);
-	grid.SetGoal(25, 45);
+	grid.SetStart(125, 45);
+	grid.SetGoal(600, 841);
 	bool status = grid.Plan(true);
 	
 	
