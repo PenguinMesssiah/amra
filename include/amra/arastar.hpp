@@ -62,6 +62,7 @@ public:
 		std::vector<int>* action_ids,
 		float m_weight,
 		int* solution_cost) override;
+	double m_search_time;
 
 private:
 	Environment* m_space = nullptr;
@@ -90,7 +91,7 @@ private:
 	std::vector<ARAStarState*> m_states, m_incons;
 
 	// Search statistics
-	double m_search_time;
+
 	int *m_expands; // expansions per queue
 	int m_w_solve, m_solution_cost;
 

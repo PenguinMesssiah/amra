@@ -177,9 +177,13 @@ bool Grid2D_Time::Plan(bool save)
     int solcost, solcost_max, solcost_min; 
     bool result;
 
+    double elapse_time, start_time = GetTime();
+
     //Backbone of Constrained A*
     for(int i=1; i<=N_BIN-1; i++)
     {
+		elapse_time = GetTime()- start_time;
+
     	m_weight = (w_max_temp+w_min_temp)/2;
     	result = m_search->replan(&solution, &action_ids, m_weight, &solcost);
     	
@@ -247,20 +251,22 @@ bool Grid2D_Time::Plan(bool save)
 		return -1;
 	}
 
+	elapse_time = GetTime() - elapse_time;
+
 	//Return Max Solution
     solcost_max /= COST_MULT;
     printf("**********************\n");
     printf("Final Solution\n");
-    printf("Path cost = %d | Path length = %d | w = %f\n", solcost_max, solution_max.back().time, m_weight);
+    printf("Path cost = %d | Path length = %d | w = %f | search time = %f\n", solcost_max, solution_max.back().time, m_weight, elapse_time);
     printf("**********************\n");
 
     m_map->SavePath(solution_max, 0);
 
-	// if (result && save)
-	// {
-	// 	std::vector<MapState> solpath;
-	// 	convertPath(solution, solpath);
-	// }
+	if (result && save)
+	{
+		std::vector<MapState> solpath;
+		convertPath(solution, solpath);
+	}
 
 	return solcost > 0;
 }
