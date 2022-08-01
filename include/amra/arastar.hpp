@@ -61,8 +61,8 @@ public:
 		std::vector<int>* solution_path,
 		std::vector<int>* action_ids,
 		float m_weight,
-		int* solution_cost) override;
-	double m_search_time;
+		double& search_time,
+		int_fast64_t* solution_cost) override;
 
 private:
 	Environment* m_space = nullptr;
@@ -94,6 +94,7 @@ private:
 
 	int *m_expands; // expansions per queue
 	int m_w_solve, m_solution_cost;
+	double m_search_time;
 
 	int num_heuristics() const { return 1; }
 
@@ -117,7 +118,7 @@ private:
 	void extract_path(
 		std::vector<int>& solution,
 		std::vector<int>& action_ids,
-		int& cost);
+		int_fast64_t& cost);
 };
 
 }  // namespace AMRA

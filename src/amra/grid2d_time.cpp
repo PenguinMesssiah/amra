@@ -111,6 +111,7 @@ void Grid2D_Time::SetStart(const int& d1, const int& d2)
 {
 	assert(!m_start_set);
 	m_start_id = getOrCreateState(d1, d2, 0);
+	assert(m_map->IsTraversible(d1,d2));
 	m_start_set = true;
 
 	m_s1 = d1;
@@ -122,6 +123,7 @@ void Grid2D_Time::SetGoal(const int& d1, const int& d2)
 {
 	assert(!m_goal_set);
 	m_goal_id = getOrCreateState(d1, d2, -1);
+	assert(m_map->IsTraversible(d1,d2));
 	m_goal_set = true;
 
 	m_g1 = d1;
@@ -174,28 +176,33 @@ bool Grid2D_Time::Plan(bool save)
 	std::vector<int> solution, action_ids;
 	std::vector<MapState> solution_min, solution_max;
     float w_min_temp = W_MIN, w_max_temp = W_MAX, m_weight;
-    int solcost, solcost_max, solcost_min; 
+    int_fast64_t solcost, solcost_max, solcost_min; 
     bool result;
 
-    double elapse_time, start_time = GetTime();
+    double cur_time = 0.0, diff = 0.0, elapse_time = 0.0;
 
     //Backbone of Constrained A*
     for(int i=1; i<=N_BIN-1; i++)
     {
-		elapse_time = GetTime()- start_time;
-
     	m_weight = (w_max_temp+w_min_temp)/2;
-    	result = m_search->replan(&solution, &action_ids, m_weight, &solcost);
     	
+    	//Terminating Early if Averaging out to Zero
+    	diff = m_weight-0.0000; 
+    	if(diff < 0.0000001)
+    		break;
+
+    	result = m_search->replan(&solution, &action_ids, m_weight, cur_time, &solcost);
+    	elapse_time += cur_time;
+
     	if(solcost == -1)
     	{
     		printf("CA*: No Feasible Path Available | w = %f\n", m_weight);
-    		break;
+    		return -1;
     	}
 
     	//Checking Constraint Satisfaction
     	MapState* s_goal = getHashEntry(solution.back());
-    	printf("s_goal->time = %d, m_weight = %f (%f, %f)\n", s_goal->time, m_weight, w_max_temp, w_min_temp);
+    	//printf("s_goal->time = %d, m_weight = %f (%f, %f)\n", s_goal->time, m_weight, w_max_temp, w_min_temp);
     	if(s_goal->time <= m_budget)
     	{
     		w_max_temp = m_weight;
@@ -208,7 +215,7 @@ bool Grid2D_Time::Plan(bool save)
     		convertPath(solution, solution_min);
     		solcost_min = solcost;
     	}
-    	printf("updated m_weight bounds = (%f, %f)\n", w_max_temp, w_min_temp);
+    	//printf("updated m_weight bounds = (%f, %f)\n", w_max_temp, w_min_temp);
 
     	if (i != N_BIN-1)
     	{
@@ -220,7 +227,8 @@ bool Grid2D_Time::Plan(bool save)
     //Checking Minimum Solution
 	if(solution_min.empty())
 	{
-		result = m_search->replan(&solution, &action_ids, w_min_temp, &solcost_min);
+		result = m_search->replan(&solution, &action_ids, w_min_temp, cur_time, &solcost_min);
+		elapse_time += cur_time;
 		convertPath(solution, solution_min);
 	}
 
@@ -234,33 +242,45 @@ bool Grid2D_Time::Plan(bool save)
 	{
 		//return HIGHRANGE
 		printf("CA*: HIGHRANGE_ERROR: W_MIN is too large.\n");
-		return -1;
+	//	return -1;
 	}
 
 	//Checking Maximum Solution
 	if(solution_max.empty())
 	{
-		result = m_search->replan(&solution, &action_ids, w_max_temp, &solcost_max);
+		result = m_search->replan(&solution, &action_ids, w_max_temp, cur_time, &solcost_max);
+		elapse_time += cur_time;
 		convertPath(solution, solution_max);
 	}
     
-	if(solution_max.back().time > m_budget)
+	if(!solution_max.empty() && !solution_max.back().time > m_budget)
 	{
 		//return LOWRANGE
 		printf("CA*: LOWRANGE_ERROR- W_MAX is too small.\n");
 		return -1;
 	}
 
-	elapse_time = GetTime() - elapse_time;
-
 	//Return Max Solution
-    solcost_max /= COST_MULT;
-    printf("**********************\n");
+	printf("**********************\n");
     printf("Final Solution\n");
-    printf("Path cost = %d | Path length = %d | w = %f | search time = %f\n", solcost_max, solution_max.back().time, m_weight, elapse_time);
-    printf("**********************\n");
+	if(!solution_max.empty())
+	{
+		solcost_max /= COST_MULT;
 
-    m_map->SavePath(solution_max, 0);
+    	printf("Path cost = %ld | Path length = %d | w = %f | search time = %f\n", solcost_max, solution_max.back().time, m_weight, elapse_time);
+    	printf("**********************\n");
+
+    	m_map->SavePath(solution_max, 0);	
+	}
+	else
+	{
+		solcost_min /= COST_MULT;
+    	printf("Path cost = %ld | Path length = %d | w = %f | search time = %f\n", solcost_min, solution_min.back().time, m_weight, elapse_time);
+    	printf("**********************\n");	
+		
+		m_map->SavePath(solution_min, 0);
+	}
+
 
 	if (result && save)
 	{
@@ -275,8 +295,8 @@ void Grid2D_Time::GetSuccs(
 	int state_id,
 	Resolution::Level level,
 	std::vector<int>* succs,
-	std::vector<unsigned int>* costs_f0,
-	std::vector<unsigned int>* costs_f1,
+	std::vector<int_fast64_t>* costs_f0,
+	std::vector<int_fast64_t>* costs_f1,
 	std::vector<int>* action_ids)
 {
 	assert(state_id >= 0);
@@ -368,14 +388,10 @@ int Grid2D_Time::generateSuccessor(
 	const MapState* parent,
 	int a1, int a2,
 	std::vector<int>* succs,
-	std::vector<unsigned int>* costs_f0,
-	std::vector<unsigned int>* costs_f1)
+	std::vector<int_fast64_t>* costs_f0,
+	std::vector<int_fast64_t>* costs_f1)
 {
 	int parent_t = parent->time;
-	// if (parent_t + 1 > m_budget) {
-	// 	// printf("Hit Hard Constraint\n");
-	// 	return -1;
-	// }
 
 	int succ_d1 = parent->coord.at(0) + a1;
 	int succ_d2 = parent->coord.at(1) + a2;
@@ -383,22 +399,6 @@ int Grid2D_Time::generateSuccessor(
 	if (!m_map->IsTraversible(succ_d1, succ_d2)) {
 		return -1;
 	}
-
-	//printf("Goal = (%d,%d)\n", m_g1, m_g2);
-	//printf("Exp = (%d,%d,%d)\n", succ_d1, succ_d2);
-
-	//Checking for Identical State Already Visited
-	// int status = getHashEntry(succ_d1, succ_d2);
-	// if(status !=  -1)
-	// {
- //    	MapState* temp = getHashEntry(status);
-
- //    	if(temp->time >= 0 && temp->time < parent_t+1)
- //    	{
- //        	//printf("Cell Already Visited {%d,%d}\n"
- //        	return -1;    
- //    	}
-	// }
 
 	int succ_state_id = getOrCreateState(succ_d1, succ_d2, parent_t + 1);
 	MapState* successor = getHashEntry(succ_state_id);
@@ -598,7 +598,7 @@ int Grid2D_Time::createGoalState(
 	return state_id;
 }
 
-std::vector<unsigned int> Grid2D_Time::cost(
+std::vector<int_fast64_t> Grid2D_Time::cost(
 	const MapState* s1,
 	const MapState* s2)
 {
@@ -608,7 +608,7 @@ std::vector<unsigned int> Grid2D_Time::cost(
 		i.e. the function wrt which i want to return the least cost path
 	*/
 
-	std::vector<unsigned int> composite_cost;
+	std::vector<int_fast64_t> composite_cost;
 	composite_cost.resize(2,0);
 	if (COSTMAP)
 	{
@@ -662,8 +662,8 @@ void Grid2D_Time::resetAll()
 void Grid2D_Time::resetStartGoalStates()
 {
 	m_start_set = false; m_goal_set = false;
-	SetStart(25, 5);
-	SetGoal(25, 45);
+	SetStart(AMRA::START_X, AMRA::START_Y);
+	SetGoal(AMRA::GOAL_X, AMRA::GOAL_Y);
 	m_search->set_start(m_start_id);
 	m_search->set_goal(m_goal_id);
 }

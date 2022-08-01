@@ -24,10 +24,17 @@ extern const double TURNING_RADIUS;
 extern const double MAX_VEL;
 extern const int WP_TIME;
 
+extern const int START_X;
+extern const int START_Y;
+extern const int GOAL_X;
+extern const int GOAL_Y;
+
 extern const bool DUBINS;
 extern const bool DIJKSTRA;
 
 extern const bool SUCCESSIVE;
+
+
 
 } // namespace SimPlan
 

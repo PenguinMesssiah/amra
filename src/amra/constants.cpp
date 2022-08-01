@@ -32,6 +32,12 @@ const double AMRA::TURNING_RADIUS = 20.0;
 const double AMRA::MAX_VEL = 8.0;
 const int AMRA::WP_TIME = 50; // milliseconds
 
+//Define Start & Goal
+const int AMRA::START_X = 125;
+const int AMRA::START_Y = 45 ;
+const int AMRA::GOAL_X  = 600;
+const int AMRA::GOAL_Y  = 750;
+
 // use dubins or dijkstra heuristics?
 const bool AMRA::DUBINS = false;
 const bool AMRA::DIJKSTRA = false;
@@ -43,5 +49,5 @@ const bool AMRA::SUCCESSIVE = true;
 // minimum and maximum weights for composite f(X)
 // number of times we half the binary search for w
 const int AMRA::W_MIN = 0.0;
-const int AMRA::W_MAX = 1000.0;
-const int AMRA::N_BIN = 100.0;
+const int AMRA::W_MAX = 9000.0;
+const int AMRA::N_BIN = 50.0;

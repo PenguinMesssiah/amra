@@ -44,8 +44,8 @@ public:
 		int state_id,
 		Resolution::Level level,
 		std::vector<int>* succs,
-		std::vector<unsigned int>* costs_f0,
-		std::vector<unsigned int>* costs_f1,
+		std::vector<int_fast64_t>* costs_f0,
+		std::vector<int_fast64_t>* costs_f1,
 		std::vector<int>* action_ids) override;
 	bool IsGoal(const int& id) override;
 	
@@ -102,9 +102,9 @@ private:
 		const MapState* parent,
 		int a1, int a2,
 		std::vector<int>* succs,
-		std::vector<unsigned int>* costs_f0,
-		std::vector<unsigned int>* costs_f1);
-	std::vector<unsigned int> cost(
+		std::vector<int_fast64_t>* costs_f0,
+		std::vector<int_fast64_t>* costs_f1);
+	std::vector<int_fast64_t> cost(
 		const MapState* s1,
 		const MapState* s2);
 

@@ -157,7 +157,8 @@ int ARAStar::replan(
 	std::vector<int>* solution_path,
 	std::vector<int>* action_ids,
 	float m_weight,
-	int* solution_cost)
+	double& p_search_time,
+	int_fast64_t* solution_cost)
 {
 	if (is_goal(m_start_id))
 	{
@@ -212,6 +213,7 @@ int ARAStar::replan(
 		bool result = improve_path(search_start_time, search_time, m_weight);
 
 		m_search_time += search_time;
+		p_search_time = search_time;
 
 		if(!result || m_search_time >= m_time_limit) {
 			break;
@@ -221,7 +223,7 @@ int ARAStar::replan(
 		}
 
 		extract_path(*solution_path, *action_ids, *solution_cost);
-		SMPL_INFO("Solved with (%f) | expansions = %d | time = %f | weight = %f | cost = %d", m_w, get_n_expands(), search_time, m_weight, *solution_cost);
+		SMPL_INFO("Solved with (%f) | expansions = %d | time = %f | weight = %f | cost = %ld", m_w, get_n_expands(), search_time, m_weight, *solution_cost);
 		if (curr_exps < get_n_expands()) {
 			m_space->SaveExpansions(m_iter, m_w, 1.0, m_weight, *solution_path, *action_ids);
 		}
@@ -304,8 +306,8 @@ void ARAStar::expand(ARAStarState *s, int hidx, float m_weight)
 	}
 
 	std::vector<int> succ_ids;
-	std::vector<unsigned int> costs_f0;
-	std::vector<unsigned int> costs_f1;
+	std::vector<int_fast64_t> costs_f0;
+	std::vector<int_fast64_t> costs_f1;
 	std::vector<int> action_ids;
 	if (is_goal(s->state_id))
 	{
@@ -327,14 +329,14 @@ void ARAStar::expand(ARAStarState *s, int hidx, float m_weight)
 	//Computing Composite f(X) function: f(X,w) = f0(X) + w*f1(X) 
 	for (size_t sidx = 0; sidx < succ_ids.size(); ++sidx)
 	{
-		unsigned int cost = costs_f0[sidx];
+		int_fast64_t cost = costs_f0[sidx];
 
 		ARAStarState *succ_state = get_state(succ_ids[sidx]);
 		reinit_state(succ_state);
 
-		unsigned int new_f0 = s->f0 + costs_f0[sidx];
-		unsigned int new_f1 = costs_f1[sidx]*COST_MULT;
-		unsigned int new_g = new_f0 + m_weight*new_f1;
+		int_fast64_t new_f0 = s->f0 + costs_f0[sidx];
+		int_fast64_t new_f1 = costs_f1[sidx]*COST_MULT;
+		int_fast64_t new_g = new_f0 + m_weight*new_f1;
 		// printf("new_g = %d, new_f0 = %d, m_weight = %d, f1 = %d\n",
 		// 	new_g, new_f0, m_weight, succ_state->f1);
 		if (new_g < succ_state->g)
@@ -396,7 +398,7 @@ void ARAStar::reorder_open()
 void ARAStar::extract_path(
 	std::vector<int>& solution,
 	std::vector<int>& action_ids,
-	int& cost)
+	int_fast64_t& cost)
 {
 	if (m_w_solve < 0) {
 		m_initial_c = m_goal->g;

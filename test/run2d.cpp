@@ -1,6 +1,6 @@
 // project includes
 #include <amra/grid2d_time.hpp>
-
+#include <amra/constants.hpp>
 // system includes
 
 // standard includes
@@ -23,8 +23,8 @@ int main(int argc, char** argv)
 	
 	Grid2D_Time grid(mapfile, budget);
 	grid.CreateAStarSearch();
-	grid.SetStart(25, 5);
-	grid.SetGoal(25, 45);
+	grid.SetStart(AMRA::START_X, AMRA::START_Y);
+	grid.SetGoal(AMRA::GOAL_X, AMRA::GOAL_Y);
 	bool status = grid.Plan(true);
 	
 	
