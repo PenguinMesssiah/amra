@@ -292,8 +292,6 @@ bool ARAStar::improve_path(
 		expand(s, 0, m_weight);
 		++m_expands[0];
 	}
-
-	printf("Just left the while loop bc fuck it\n");
 }
 
 void ARAStar::expand(ARAStarState *s, int hidx, float m_weight)
