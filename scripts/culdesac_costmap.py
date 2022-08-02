@@ -11,8 +11,8 @@ mapname = MAP.split('/')[-1].split('.')[0]
 
 M = np.genfromtxt(MAP, delimiter=',')
 m, n = M.shape
-noise = np.random.randn(m, n) * 5
-noise = ndimage.gaussian_filter(noise, sigma=(5, 5), order=0, mode='wrap')
+noise = np.random.randn(m, n) * 100
+noise = ndimage.gaussian_filter(noise, sigma=(30, 30), order=0, mode='wrap')
 noise = np.abs(noise)
 costs = 97 + (122-97) * ((noise - np.min(noise)) / (np.max(noise) - np.min(noise)))
 costs = costs * M

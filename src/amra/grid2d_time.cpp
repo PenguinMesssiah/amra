@@ -101,7 +101,8 @@ void Grid2D_Time::CreateSearch()
 void Grid2D_Time::CreateAStarSearch()
 {
 	// m_heurs.emplace_back(new EuclideanDist(this));
-	m_heurs.emplace_back(new ManhattanDist(this));
+	// m_heurs.emplace_back(new ManhattanDist(this));
+	m_heurs.emplace_back(new Dijkstra(this, m_map.get()));
 	m_search = std::make_unique<ARAStar>(this, m_heurs.at(0));
 	m_search->reset();
 	//m_default_res = Resolution::HIGH;
@@ -110,6 +111,7 @@ void Grid2D_Time::CreateAStarSearch()
 void Grid2D_Time::SetStart(const int& d1, const int& d2)
 {
 	assert(!m_start_set);
+	assert(m_map->IsTraversible(d1,d2));
 	m_start_id = getOrCreateState(d1, d2, 0);
 	m_start_set = true;
 
@@ -121,6 +123,7 @@ void Grid2D_Time::SetStart(const int& d1, const int& d2)
 void Grid2D_Time::SetGoal(const int& d1, const int& d2)
 {
 	assert(!m_goal_set);
+	assert(m_map->IsTraversible(d1,d2));
 	m_goal_id = getOrCreateState(d1, d2, -1);
 	m_goal_set = true;
 
@@ -131,6 +134,7 @@ void Grid2D_Time::SetGoal(const int& d1, const int& d2)
 
 bool Grid2D_Time::Plan(bool save)
 {
+	double startTime = GetTime();
 	int d1s, d2s, d1g, d2g;
 	if (!m_start_set)
 	{
@@ -174,11 +178,18 @@ bool Grid2D_Time::Plan(bool save)
 	std::vector<int> action_ids;
     int solcost;
     bool result = m_search->replan(&solution, &action_ids, &solcost);
+    if(!solution.empty())
+    {
+    	int path_length=getHashEntry(solution.at(solution.size()-1))->coord.at(2);	
+    	writeResultsToFile(path_length, GetTime()-startTime, solcost);
+    }
+    
 
 	if (result && save)
 	{
 		std::vector<MapState> solpath;
 		convertPath(solution, solpath);
+		printf("Max time coord seen = %d, length of path = %d\n", m_max_time, solpath.size());
 
 		// for (const auto& s: solpath) {
 		// 	printf("%d,%d,%d\n", s.coord.at(0), s.coord.at(1), s.coord.at(2));
@@ -227,6 +238,9 @@ void Grid2D_Time::GetSuccs(
 	costs->clear();
 
 	MapState* parent = getHashEntry(state_id);
+	if (parent->coord.at(2) > m_max_time) {
+		m_max_time = parent->coord.at(2);
+	}
 	assert(parent);
 	assert(m_map->IsTraversible(parent->coord.at(0), parent->coord.at(1)));
 	m_closed[static_cast<int>(1)].push_back(parent);
@@ -306,6 +320,17 @@ Resolution::Level Grid2D_Time::GetResLevel(const int& state_id)
 	return s->level;
 }
 
+void Grid2D_Time::writeResultsToFile(int path_length, int time, int sol_cost)
+{
+	std::ofstream myfile;
+ 	myfile.open ("solutions_indptTime.txt");
+ 	myfile << "Path Length = \n" << path_length << "\n";
+ 	myfile << "time = \n" << path_length << "\n";
+ 	myfile << "sol cost = \n" << sol_cost << "\n";
+
+ 	myfile.close();
+}
+
 int Grid2D_Time::generateSuccessor(
 	const MapState* parent,
 	int a1, int a2,
@@ -324,18 +349,18 @@ int Grid2D_Time::generateSuccessor(
 		return -1;
 	}
 
-	//Checking for Identical State Already Visited
-	for(int t_prime=0; t_prime < parent_t + 1; t_prime++)
-	{
-		int status = getHashEntry(succ_d1, succ_d2, t_prime);
-		if(status !=  -1)
-		{
-			MapState* temp = getHashEntry(status);
-			//printf("Cell Already Visited {%d,%d}\n", 
-			//	temp->coord.at(0), temp->coord.at(1));
-			return -1;
-		}
-	}
+	// //Checking for Identical State Already Visited
+	// for(int t_prime=0; t_prime < parent_t + 1; t_prime++)
+	// {
+	// 	int status = getHashEntry(succ_d1, succ_d2, t_prime);
+	// 	if(status !=  -1)
+	// 	{
+	// 		MapState* temp = getHashEntry(status);
+	// 		//printf("Cell Already Visited {%d,%d}\n", 
+	// 		//	temp->coord.at(0), temp->coord.at(1));
+	// 		return -1;
+	// 	}
+	// }
 
 	int succ_state_id = getOrCreateState(succ_d1, succ_d2, parent_t + 1);
 	MapState* successor = getHashEntry(succ_state_id);
@@ -463,7 +488,7 @@ int Grid2D_Time::reserveHashEntry()
 
 	int state_id = (int)m_states.size();
 
-	// map state id -> state
+	// map state id -> state2
 	m_states.push_back(entry);
 
 	// // map planner state -> graph state
@@ -550,7 +575,7 @@ unsigned int Grid2D_Time::cost(
 	else
 	{
 		double dist = 0.0;
-		for (size_t i = 0; i < s1->coord.size(); ++i) {
+		for (size_t i = 0; i < 2; ++i) {
 			dist += std::pow(s1->coord.at(i) - s2->coord.at(i), 2);
 		}
 		dist = std::sqrt(dist);

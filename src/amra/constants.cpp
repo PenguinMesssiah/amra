@@ -34,7 +34,7 @@ const int AMRA::WP_TIME = 50; // milliseconds
 
 // use dubins or dijkstra heuristics?
 const bool AMRA::DUBINS = false;
-const bool AMRA::DIJKSTRA = false;
+const bool AMRA::DIJKSTRA = true;
 
 // run successive search iterations from scratch?
 // (with no reuse of previous search effort)

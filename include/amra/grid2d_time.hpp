@@ -73,6 +73,8 @@ private:
 	std::vector<MapState*> m_states;
 	EXPANDS_t m_closed;
 
+	int m_max_time = 0;
+
 	// maps from coords to stateID
 	typedef MapState StateKey;
 	typedef smpl::PointerValueHash<StateKey> StateHash;
@@ -106,6 +108,8 @@ private:
 	bool convertPath(
 		const std::vector<int>& idpath,
 		std::vector<MapState>& path);
+	void writeResultsToFile(int path_length, int time, int sol_cost);
+
 };
 
 }  // namespace AMRA

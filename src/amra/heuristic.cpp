@@ -36,7 +36,7 @@ unsigned int EuclideanDist::GetStartHeuristic(int state_id)
 	assert(state.coord.size() == start.coord.size());
 
 	double dist = 0.0;
-	for (size_t i = 0; i < state.coord.size(); ++i) {
+	for (size_t i = 0; i < 2; ++i) {
 		dist += std::pow(state.coord.at(i) - start.coord.at(i), 2);
 	}
 	dist = std::sqrt(dist);
@@ -52,7 +52,7 @@ unsigned int EuclideanDist::GetFromToHeuristic(int from_id, int to_id)
 	assert(from.coord.size() == to.coord.size());
 
 	double dist = 0.0;
-	for (size_t i = 0; i < from.coord.size(); ++i) {
+	for (size_t i = 0; i < 2; ++i) {
 		dist += std::pow(from.coord.at(i) - to.coord.at(i), 2);
 	}
 	dist = std::sqrt(dist);
@@ -61,14 +61,14 @@ unsigned int EuclideanDist::GetFromToHeuristic(int from_id, int to_id)
 
 unsigned int ManhattanDist::GetGoalHeuristic(int state_id)
 {
-	MapState state, goal;
-	m_space->GetGoal(goal);
-	m_space->GetStateFromID(state_id, state);
+	MapState state, goal; 
+	m_space->GetGoal(goal); //goal = 515,60 -1
+	m_space->GetStateFromID(state_id, state); // state = 150, 60 ,300
 
 	assert(state.coord.size() == goal.coord.size());
 
 	double dist = 0.0;
-	for (size_t i = 0; i < state.coord.size(); ++i) {
+	for (size_t i = 0; i < 2; ++i) {
 		dist += std::abs(state.coord.at(i) - goal.coord.at(i));
 	}
 	return (dist * COST_MULT);
@@ -83,7 +83,7 @@ unsigned int ManhattanDist::GetStartHeuristic(int state_id)
 	assert(state.coord.size() == start.coord.size());
 
 	double dist = 0.0;
-	for (size_t i = 0; i < state.coord.size(); ++i) {
+	for (size_t i = 0; i < 2; ++i) {
 		dist += std::abs(state.coord.at(i) - start.coord.at(i));
 	}
 	return (dist * COST_MULT);
@@ -98,7 +98,7 @@ unsigned int ManhattanDist::GetFromToHeuristic(int from_id, int to_id)
 	assert(from.coord.size() == to.coord.size());
 
 	double dist = 0.0;
-	for (size_t i = 0; i < from.coord.size(); ++i) {
+	for (size_t i = 0; i < 2; ++i) {
 		dist += std::abs(from.coord.at(i) - to.coord.at(i));
 	}
 	return (dist * COST_MULT);

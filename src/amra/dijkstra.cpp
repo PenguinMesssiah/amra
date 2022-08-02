@@ -2,6 +2,7 @@
 #include <amra/dijkstra.hpp>
 #include <amra/constants.hpp>
 #include <amra/movingai.hpp>
+#include <amra/helpers.hpp>
 
 // system includes
 
@@ -30,6 +31,12 @@ void Dijkstra::Init(const DiscState& robot, const DiscState& goal)
 {
 	m_start = goal;
 	m_goal = robot;
+	if (m_start.size() > 2) {
+		m_start.erase(m_start.begin() + 2, m_start.end());
+	}
+	if (m_goal.size() > 2) {
+		m_goal.erase(m_goal.begin() + 2, m_goal.end());
+	}
 
 	m_start_id = getOrCreateState(m_start);
 	m_goal_id = getOrCreateState(m_goal);
@@ -192,19 +199,51 @@ void Dijkstra::insert_or_update(AbstractState *state)
 
 unsigned int Dijkstra::euclidean_dist(const DiscState& s)
 {
-	return cost(s, m_goal);
+	assert(s.size() == m_goal.size());
+
+	double dist = 0.0;
+	for (size_t i = 0; i < s.size(); ++i) {
+		dist += std::pow(s.at(i) - m_goal.at(i), 2);
+	}
+	dist = std::sqrt(dist);
+	return COST_MULT * dist;
 }
 
 unsigned int Dijkstra::cost(const DiscState& a, const DiscState& b)
 {
-	assert(a.size() == b.size());
+	/*
+		return the value of the cost between a and b
+		of the function i want to minimise
+		i.e. the function wrt which i want to return the least cost path
+	*/
+	if (COSTMAP)
+	{
+		int dir1 = sgn(b.at(0) - a.at(0));
+		int dir2 = sgn(b.at(1) - a.at(1));
 
-	double dist = 0.0;
-	for (size_t i = 0; i < a.size(); ++i) {
-		dist += std::pow(a.at(i) - b.at(i), 2);
+		int h, w;
+		auto map = m_map->GetMap();
+		h = m_map->GetH();
+		w = m_map->GetW();
+
+		unsigned int cost = 0;
+		for (int d1 = a.at(0) + dir1, d2 = a.at(1) + dir2;
+					d1 != b.at(0) + dir1 || d2 != b.at(1) + dir2;
+						d1 += dir1, d2 += dir2)
+		{
+			cost += map[GETMAPINDEX(d1, d2, h, w)];
+		}
+		return (cost * COST_MULT);
 	}
-	dist = std::sqrt(dist);
-	return COST_MULT * dist;
+	else
+	{
+		double dist = 0.0;
+		for (size_t i = 0; i < a.size(); ++i) {
+			dist += std::pow(a.at(i) - b.at(i), 2);
+		}
+		dist = std::sqrt(dist);
+		return (dist * COST_MULT);
+	}
 }
 
 }  // namespace AMRA

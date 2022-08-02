@@ -283,6 +283,7 @@ void ARAStar::expand(ARAStarState *s, int hidx)
 {
 	assert(!s->closed);
 	s->closed = true;
+	// printf("g = %u, f = %u\n", s->g, s->od[0].f);
 
 	if (m_open[0].contains(&s->od[0])) {
 		m_open[0].erase(&s->od[0]);
