@@ -102,7 +102,8 @@ void Grid2D_Time::CreateSearch()
 void Grid2D_Time::CreateAStarSearch()
 {
 	// m_heurs.emplace_back(new EuclideanDist(this));
-	m_heurs.emplace_back(new ManhattanDist(this));
+	//m_heurs.emplace_back(new ManhattanDist(this));
+	m_heurs.emplace_back(new Dijkstra(this, m_map.get()));
 	m_search = std::make_unique<ARAStar>(this, m_heurs.at(0));
 	m_search->reset();
 	//m_default_res = Resolution::HIGH;
